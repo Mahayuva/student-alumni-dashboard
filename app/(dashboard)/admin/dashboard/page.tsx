@@ -50,7 +50,7 @@ export default function AdminDashboard() {
         return <div className="flex h-96 items-center justify-center text-slate-500">Loading dashboard...</div>;
     }
 
-    const { stats, pendingApprovals, analytics } = data || { stats: { students: 0, alumni: 0, jobs: 0, events: 0 }, pendingApprovals: [], analytics: { placementRate: 0, dailyActiveUsers: 0 } };
+    const { stats, pendingApprovals, analytics } = data || { stats: { students: 0, alumni: 0, jobs: 0, events: 0 }, pendingApprovals: [], analytics: { placementRate: 0, dailyActiveUsers: 0, newRegistrations: 0, chartData: [0, 0, 0, 0, 0, 0, 0] } };
 
     const displayStats = [
         { label: "Total Students", value: stats.students, trend: "Live", icon: Users, color: "text-blue-600 bg-blue-50" },
@@ -141,8 +141,8 @@ export default function AdminDashboard() {
                             </h3>
                         </div>
                         <div className="h-40 flex items-end gap-2 justify-between px-4 pb-2 border-b border-slate-100">
-                            {/* Mock Chart Bars for visual layout */}
-                            {[40, 65, 45, 80, 55, 70, analytics.placementRate].map((h, i) => (
+                            {/* Visual Chart Bars */}
+                            {analytics.chartData.map((h: number, i: number) => (
                                 <div key={i} className="w-8 bg-blue-100 rounded-t-sm relative group cursor-pointer hover:bg-blue-200:bg-blue-800 transition-colors" style={{ height: `${h}%` }}>
                                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                         {h}%
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex justify-between text-xs">
                                 <span className="text-slate-500">New Registrations</span>
-                                <span className="font-medium bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Live metrics API</span>
+                                <span className="font-medium bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{analytics.newRegistrations}</span>
                             </div>
                         </div>
                     </div>

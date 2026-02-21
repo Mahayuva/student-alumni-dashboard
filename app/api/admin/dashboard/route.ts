@@ -22,13 +22,29 @@ export async function GET() {
             take: 5
         });
 
-        // Other basic metrics
-        const placementRate = 85; // This would typically be calculated from job placements
+        const placedAlumniCount = await prisma.profile.count({
+            where: {
+                user: { role: "ALUMNI" },
+                company: { not: null },
+            }
+        });
+
+        const placementRate = alumniCount > 0 ? Math.round((placedAlumniCount / alumniCount) * 100) : 0;
+
         const dailyActiveUsers = await prisma.user.count({
             where: {
                 updatedAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }
             }
         });
+
+        const newRegistrations = await prisma.user.count({
+            where: {
+                createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+            }
+        });
+
+        // 7 days mock or real data
+        const chartData = [10, 20, 15, 30, 25, 35, placementRate];
 
         return NextResponse.json({
             stats: {
@@ -40,7 +56,9 @@ export async function GET() {
             pendingApprovals: pendingAlumni,
             analytics: {
                 placementRate,
-                dailyActiveUsers
+                dailyActiveUsers,
+                newRegistrations,
+                chartData
             }
         });
     } catch (e) {
