@@ -1,0 +1,5 @@
+app/(dashboard)/alumni/dashboard/page.tsx(205,34): error TS2304: Cannot find name 'TrendingUp'.
+app/(dashboard)/alumni/stories/create/page.tsx(3,32): error TS2307: Cannot find module '../../student/stories/page' or its corresponding type declarations.
+app/api/student/skills/analyze/route.ts(5,8): error TS1192: Module '"C:/bitbucket/student-alumni-dashboard/node_modules/pdf-parse/dist/pdf-parse/esm/index"' has no default export.
+components/features/settings/ThemeEditor.tsx(4,10): error TS2305: Module '"@/components/providers/ThemeContext"' has no exported member 'useTheme'.
+middleware.ts(20,17): error TS2367: This comparison appears to be unintentional because the types '"ADMIN" | undefined' and '"ALUMNI"' have no overlap.

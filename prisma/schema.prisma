@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ALUMNI
+  ADMIN
+}
+
+enum JobType {
+  FULL_TIME
+  INTERNSHIP
+  CONTRACT
+  FREELANCE
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum EventType {
+  WEBINAR
+  WORKSHOP
+  MEETUP
+  CONFERENCE
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(STUDENT) // Using Enum for Role
+  isVerified    Boolean   @default(false)   // Admin verification for Alumni
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile           Profile?
+  
+  // Jobs & Events
+  postedJobs        Job[]
+  jobApplications   JobApplication[]
+  postedEvents      Event[]
+  attendances       EventRegistration[]
+
+  // Mentorship
+  mentorshipSent     MentorshipRequest[] @relation("MenteeRequests")
+  mentorshipReceived MentorshipRequest[] @relation("MentorRequests")
+
+  // Connections
+  connectionsSent     Connection[] @relation("ConnectionSender")
+  connectionsReceived Connection[] @relation("ConnectionReceiver")
+  
+  // Content & Feedback
+  stories           Story[]
+  feedbacks         Feedback[]
+  notifications     Notification[]
+
+  // Real-Time Chat
+  messagesSent      Message[] @relation("MessageSender")
+  messagesReceived  Message[] @relation("MessageReceiver")
+
+  // Gamification
+  badges            UserBadge[]
+
+  // Donations
+  donations         Donation[]
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Common
+  bio         String?
+  headline    String?
+  city        String?
+  country     String?
+  skills      String[] // Array of strings
+  interests   String[] 
+  
+  // Social Links
+  linkedin    String?
+  github      String?
+  twitter     String?
+  website     String?
+
+  // Student Specific
+  batch       String?  // e.g., "2024"
+  department  String?  // e.g., "Computer Science"
+  rollNumber  String?
+
+  // Alumni Specific
+  currentRole String?
+  company     String?
+  industry    String?
+  workHistory Json?    // Array of { title, company, duration, description }
+  
+  // Education History (for both)
+  education   Json?    // Array of { institution, degree, year }
+
+  // Location for AlumFinder
+  latitude    Float?
+  longitude   Float?
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  company     String
+  description String
+  location    String
+  type        JobType
+  workMode    WorkMode @default(ONSITE)
+  salaryRange String?
+  requirements String?
+  
+  postedById  String
+  postedBy    User     @relation(fields: [postedById], references: [id])
+  
+  applications JobApplication[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  jobId     String
+  studentId String
+  status    RequestStatus @default(PENDING)
+  resumeUrl String?
+  coverNote String?
+  
+  job       Job      @relation(fields: [jobId], references: [id])
+  student   User     @relation(fields: [studentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, studentId])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  location    String?
+  link        String?   // For webinars
+  type        EventType
+  
+  postedById  String
+  postedBy    User      @relation(fields: [postedById], references: [id])
+  
+  registrations EventRegistration[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isApproved  Boolean   @default(true) // Admin approval for alumni events
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model MentorshipRequest {
+  id        String   @id @default(cuid())
+  menteeId  String
+  mentorId  String
+  status    RequestStatus @default(PENDING)
+  message   String?
+  
+  mentee    User     @relation("MenteeRequests", fields: [menteeId], references: [id])
+  mentor    User     @relation("MentorRequests", fields: [mentorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Connection {
+  id          String        @id @default(cuid())
+  senderId    String
+  receiverId  String
+  status      RequestStatus @default(PENDING)
+  
+  sender      User          @relation("ConnectionSender", fields: [senderId], references: [id])
+  receiver    User          @relation("ConnectionReceiver", fields: [receiverId], references: [id])
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([senderId, receiverId])
+}
+
+model Story {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  authorId    String
+  isApproved  Boolean  @default(false)
+  
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Feedback {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // UI, Feature, Bug, Suggestion
+  message     String
+  
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  link        String?
+  
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+// ==========================================
+// NEW FEATURE MODELS
+// ==========================================
+
+// Chat System (Real-Time Messaging)
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  senderId    String
+  receiverId  String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  sender      User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiver    User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
+// Gamification (Badges)
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+// Donations / Scholarship Fund
+model Donation {
+  id          String   @id @default(cuid())
+  donorId     String
+  amount      Float
+  currency    String   @default("USD")
+  status      RequestStatus @default(PENDING) // Can be used to track if payment completed
+  message     String?
+  createdAt   DateTime @default(now())
+
+  donor       User     @relation(fields: [donorId], references: [id])
+}
