@@ -1,8 +1,12 @@
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { prisma } from '@/lib/db';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+
+const google = createGoogleGenerativeAI({
+    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
 
 export const maxDuration = 30;
 
@@ -80,12 +84,12 @@ KEEP RESPONSES CONCISE AND EASY TO READ using MARKDOWN format.
 
         // 5. Stream Response from ML Model
         const result = await streamText({
-            model: google('gemini-1.0-pro'),
+            model: google('gemini-2.5-flash'),
             system: systemPrompt,
             messages,
         });
 
-        return result.toAIStreamResponse();
+        return result.toDataStreamResponse();
     } catch (error) {
         console.error("AI Chat Error:", error);
         return new Response("Error connecting to the AI Model.", { status: 500 });
