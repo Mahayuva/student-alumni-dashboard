@@ -79,13 +79,13 @@ KEEP RESPONSES CONCISE AND EASY TO READ using MARKDOWN format.
 `;
 
         // 5. Stream Response from ML Model
-        const result = streamText({
-            model: google('gemini-2.5-flash') as any, // Premium Model
+        const result = await streamText({
+            model: google('gemini-1.0-pro'),
             system: systemPrompt,
             messages,
         });
 
-        return (result as any).toDataStreamResponse();
+        return result.toAIStreamResponse();
     } catch (error) {
         console.error("AI Chat Error:", error);
         return new Response("Error connecting to the AI Model.", { status: 500 });

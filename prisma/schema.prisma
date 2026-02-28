@@ -82,6 +82,10 @@ model User {
 
   // Donations
   donations         Donation[]
+
+  // Profile Views
+  profileViewsSent     ProfileView[] @relation("ProfileViewer")
+  profileViewsReceived ProfileView[] @relation("ProfileViewed")
 }
 
 model Profile {
@@ -309,4 +313,14 @@ model Donation {
   createdAt   DateTime @default(now())
 
   donor       User     @relation(fields: [donorId], references: [id])
+}
+
+model ProfileView {
+  id        String   @id @default(cuid())
+  viewerId  String
+  viewedId  String
+  createdAt DateTime @default(now())
+
+  viewer    User     @relation("ProfileViewer", fields: [viewerId], references: [id])
+  viewed    User     @relation("ProfileViewed", fields: [viewedId], references: [id])
 }

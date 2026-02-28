@@ -44,7 +44,15 @@ export async function GET() {
         });
 
         // 7 days mock or real data
-        const chartData = [10, 20, 15, 30, 25, 35, placementRate];
+        const chartData: number[] = [];
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            // For demonstration, let's assume a simple trend or use a placeholder.
+            // In a real app, you'd query historical data for each day.
+            chartData.push(newRegistrations + (i - 3) * 2); // Simple linear trend around today's registrations
+        }
 
         return NextResponse.json({
             stats: {

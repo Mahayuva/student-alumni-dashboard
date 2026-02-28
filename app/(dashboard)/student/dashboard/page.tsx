@@ -46,10 +46,10 @@ export default function StudentDashboard() {
     }, [session]);
 
     const statItems = [
-        { label: "Job Applications", value: stats.jobApplications.toString(), trend: "View All", color: "bg-blue-50 text-blue-600", icon: Briefcase },
-        { label: "Events Registered", value: stats.eventsRegistered.toString(), trend: "View All", color: "bg-orange-50 text-orange-600", icon: Calendar },
-        { label: "Mentors Connected", value: stats.connections.toString(), trend: "View All", color: "bg-green-50 text-green-600", icon: Users },
-        { label: "Profile Views", value: stats.profileViews.toString(), trend: "Coming Soon", color: "bg-purple-50 text-purple-600", icon: TrendingUp },
+        { label: "Job Applications", value: (stats?.jobApplications || 0).toString(), trend: "View All", color: "bg-blue-50 text-blue-600", icon: Briefcase },
+        { label: "Events Registered", value: (stats?.eventsRegistered || 0).toString(), trend: "View All", color: "bg-orange-50 text-orange-600", icon: Calendar },
+        { label: "Mentors Connected", value: (stats?.connections || 0).toString(), trend: "View All", color: "bg-green-50 text-green-600", icon: Users },
+        { label: "Profile Views", value: (stats?.profileViews || 0).toString(), trend: "Coming Soon", color: "bg-purple-50 text-purple-600", icon: TrendingUp },
     ];
 
     return (

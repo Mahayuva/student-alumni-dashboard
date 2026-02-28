@@ -134,7 +134,7 @@ export async function GET() {
                 jobApplications: jobApplicationsCount,
                 eventsRegistered: eventsRegisteredCount,
                 connections: connectionsCount,
-                profileViews: 0 // Not tracked yet
+                profileViews: 0 // Default value as it's not tracked
             },
             activities,
             upcomingEvents,
