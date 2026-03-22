@@ -70,13 +70,9 @@ export function Chatbot() {
                                         : "bg-white border border-slate-100 text-slate-700 rounded-tl-none shadow-sm"
                                         }`}
                                 >
-                                    {/* Render simple markdown styling mapping */}
-                                    {msg.content.split('\n').map((line: string, i: number) => (
-                                        <p key={i} className="mb-1 last:mb-0">
-                                            {line.replace(/\*\*(.*?)\*\*/g, '$1')}
-                                            {/* Strip markdown bold manually for quick render or use react-markdown. Here we just print as is and strip bold asterisks for clean look */}
-                                        </p>
-                                    ))}
+                                    <div className="whitespace-pre-wrap break-words">
+                                        {msg.content}
+                                    </div>
                                 </div>
 
                                 {msg.role === 'user' && (
@@ -107,13 +103,13 @@ export function Chatbot() {
                             type="text"
                             placeholder="Ask me to review your resume or suggest jobs..."
                             className="flex-1 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl px-4 py-2.5 text-sm transition-all outline-none"
-                            value={input}
+                            value={input || ""}
                             onChange={handleInputChange}
                             disabled={isLoading}
                         />
                         <button
                             type="submit"
-                            disabled={isLoading || !input.trim()}
+                            disabled={isLoading || !(input?.trim())}
                             className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Send className="w-4 h-4" />

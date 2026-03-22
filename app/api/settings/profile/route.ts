@@ -89,3 +89,43 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
     }
 }
+
+export async function GET(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            include: { profile: true }
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            fullName: user.name || "",
+            email: user.email || "",
+            bio: user.profile?.bio || "",
+            batch: user.profile?.batch || "",
+            department: user.profile?.department || "",
+            city: user.profile?.city || "",
+            company: user.profile?.company || "",
+            jobTitle: user.profile?.currentRole || "",
+            education: user.profile?.education || "",
+            skills: user.profile?.skills?.join(", ") || "",
+            interests: user.profile?.interests?.join(", ") || "",
+            social: {
+                linkedin: user.profile?.linkedin || "",
+                github: user.profile?.github || "",
+                twitter: user.profile?.twitter || ""
+            }
+        });
+    } catch (e) {
+        console.error("Profile fetch failed:", e);
+        return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
+    }
+}

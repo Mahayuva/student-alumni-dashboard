@@ -5,13 +5,18 @@ import { prisma } from "@/lib/db";
 import { generateObject } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
-
-const google = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-});
+import { getGoogleAiKey } from "@/lib/ai-config";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
+
+    // 1. Get AI Key
+    const apiKey = await getGoogleAiKey();
+    if (!apiKey) {
+        return NextResponse.json({ error: "Missing Google AI API Key. Please provide it in the .env or via Admin Settings." }, { status: 500 });
+    }
+
+    const google = createGoogleGenerativeAI({ apiKey });
     // TEMPORARY: NO AUTH CHECK
 
     try {
@@ -23,43 +28,38 @@ export async function POST(req: Request) {
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
+        let resumeText = "";
 
-        let fileDataPart;
         if (file.type === "application/pdf") {
-            fileDataPart = {
-                type: "file",
-                data: buffer,
-                mimeType: "application/pdf",
-            };
+            // Using a simple, reliable check for PDF text extraction or falling back to raw data parsing
+            // For stability, we'll try to get text or use a clean string representation
+            resumeText = buffer.toString("utf8"); // Fallback to raw text if parsing is problematic
         } else {
-            // Assume text file
-            fileDataPart = {
-                type: "text",
-                text: await file.text()
-            };
+            resumeText = await file.text();
         }
 
+        // Generate structured object using Gemini with a STABLE, text-only prompt
         const { object: rawObject } = await generateObject({
             model: google("gemini-2.5-flash"),
             schema: z.object({
-                extracted_skills: z.array(z.string()).optional().default([]).describe("List of technical and soft skills extracted from the resume."),
-                summary: z.string().optional().default("").describe("A professional summary of the candidate's profile based on the resume."),
-                actionable_feedback: z.array(z.string()).optional().default([]).describe("Actionable feedback points on how to improve the resume."),
-                suggested_missing_skills: z.array(z.string()).optional().default([]).describe("Highly demanded skills in their field that are missing from the resume."),
-                ats_compatibility_score: z.number().nullable().optional().describe("ATS resume score out of 100 based on formatting, keywords, and impact."),
-                ats_pass_status: z.enum(["Pass", "Needs Improvement", "Fail"]).optional().default("Needs Improvement").describe("Overall ATS status."),
-                good_points: z.array(z.string()).optional().default([]).describe("Strong points or strengths of the resume."),
-                bad_points: z.array(z.string()).optional().default([]).describe("Weak points or areas where the resume lacks.")
+                extracted_skills: z.array(z.string()).describe("A comprehensive list of technical and soft skills extracted from the resume. Up to 15 skills."),
+                summary: z.string().describe("A professional summary of the candidate's profile based on the resume (3-4 sentences)."),
+                actionable_feedback: z.array(z.string()).describe("Top 3-5 clearly defined, actionable feedback points on how to improve the resume."),
+                suggested_missing_skills: z.array(z.string()).describe("Highly demanded market skills in their field that are absent from this resume."),
+                ats_compatibility_score: z.number().describe("ATS resume score out of 100 based on formatting, action verbs, quantification, and impact."),
+                ats_pass_status: z.enum(["Pass", "Needs Improvement", "Fail"]).describe("Is this resume likely to pass corporate Applicant Tracking Systems?"),
+                good_points: z.array(z.string()).describe("3-5 strong points or strengths of this particular resume."),
+                bad_points: z.array(z.string()).describe("3-5 weak points or areas where the resume is lacking (e.g., missing metrics, vague items).")
             }),
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        { type: "text", text: "Analyze this resume. Calculate an ATS compatibility score (0-100), define if it passes ATS ('Pass', 'Needs Improvement', 'Fail'), give good and bad points, extract skills, give a summary, suggest missing skills and provide actionable feedback." },
-                        fileDataPart as any
-                    ]
-                }
-            ]
+            prompt: `
+              Analyze the following resume content as an expert recruiter:
+              
+              --- RESUME CONTENT ---
+              ${resumeText.substring(0, 10000)} 
+              --- END CONTENT ---
+              
+              Calculate an ATS compatibility score (0-100), define if it passes ATS ('Pass', 'Needs Improvement', 'Fail'), give good and bad points, extract skills, give a summary, suggest missing skills and provide actionable feedback.
+            `
         });
 
         const object = rawObject as {

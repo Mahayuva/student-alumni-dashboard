@@ -3,10 +3,7 @@ import { streamText } from 'ai';
 import { prisma } from '@/lib/db';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-
-const google = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-});
+import { getGoogleAiKey } from "@/lib/ai-config";
 
 export const maxDuration = 30;
 
@@ -30,11 +27,15 @@ export async function POST(req: Request) {
             return new Response(errorStream, { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" } });
         }
 
-        // 2. Safely Check for Machine Learning API Key
-        if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-            const warningText = "⚠️ **Missing API Key**\\n\\nI am your new Pro-Level Machine Learning Chatbot! The UI and Database connections are perfectly wired up.\\n\\nTo unlock my intelligence so I can analyze your LinkedIn, suggest skills, and recommend Alumni profiles to DM, please add **\`GOOGLE_GENERATIVE_AI_API_KEY\`** to your \`.env\` file (You can get one for free at Google AI Studio).\\n\\nOnce added, I'll instantly read all active Jobs and Alumni from your database!";
+        // 2. Fetch API key from DB or ENV
+        const apiKey = await getGoogleAiKey();
+
+        if (!apiKey) {
+            const warningText = "⚠️ **Missing API Key**\n\nI am your new Pro-Level Machine Learning Chatbot! To unlock my intelligence, please add **`GOOGLE_GENERATIVE_AI_API_KEY`** to your `.env` file or update it in the Admin Dashboard Settings.";
             return new Response(createMockStream(warningText), { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" } });
         }
+
+        const google = createGoogleGenerativeAI({ apiKey });
 
         // 3. Fetch Personal & Platform Data Context for the ML Model
         const currentUserProfile = await prisma.profile.findFirst({
@@ -89,6 +90,7 @@ KEEP RESPONSES CONCISE AND EASY TO READ using MARKDOWN format.
             messages,
         });
 
+        // Ensure we send the correct stream header for Next.js AI SDK hooks
         return result.toDataStreamResponse();
     } catch (error) {
         console.error("AI Chat Error:", error);

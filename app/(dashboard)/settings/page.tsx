@@ -1,33 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { User, Lock, Bell, Shield, Camera, Save, Linkedin, Github, Twitter, Loader2 } from "lucide-react";
+import { User, Lock, Bell, Shield, Camera, Save, Linkedin, Github, Twitter, Loader2, Settings } from "lucide-react";
 
 export default function SettingsPage() {
     const { data: session } = useSession();
     const [activeTab, setActiveTab] = useState("profile");
     const [isLoading, setIsLoading] = useState(false);
+    const [aiKey, setAiKey] = useState("");
+    const [isSavingAiKey, setIsSavingAiKey] = useState(false);
 
-    // Mock user data states
+    // Fetch AI Key for Admins
+    useEffect(() => {
+        if (session?.user?.role === "ADMIN") {
+            fetch("/api/admin/config")
+                .then(res => res.json())
+                .then(data => {
+                    const keyConfig = data.find((c: any) => c.key === "GOOGLE_AI_KEY");
+                    if (keyConfig) setAiKey(keyConfig.value);
+                })
+                .catch(err => console.error("Failed to fetch config", err));
+        }
+    }, [session]);
+
     const [profile, setProfile] = useState({
         fullName: session?.user?.name || "",
         email: session?.user?.email || "",
         bio: "",
-        batch: "2026",
+        batch: "",
         department: "",
         city: "",
         company: "",
         jobTitle: "",
         education: "",
-        skills: "React, Python, ML",
-        interests: "AI, Web Dev",
+        skills: "",
+        interests: "",
         social: {
             linkedin: "",
             github: "",
             twitter: ""
         }
     });
+
+    // Fetch live profile from DB
+    useEffect(() => {
+        if (session?.user?.email) {
+            fetch("/api/settings/profile")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        setProfile(prev => ({ ...prev, ...data }));
+                    }
+                })
+                .catch(err => console.error("Failed to fetch live profile data", err));
+        }
+    }, [session?.user?.email]);
 
     const [toggles, setToggles] = useState({
         notifications: {
@@ -43,6 +71,22 @@ export default function SettingsPage() {
             acceptMentorship: true
         }
     });
+
+    const handleSaveAiKey = async () => {
+        setIsSavingAiKey(true);
+        try {
+            const res = await fetch("/api/admin/config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ key: "GOOGLE_AI_KEY", value: aiKey })
+            });
+            if (res.ok) alert("AI Settings Updated!");
+        } catch (e) {
+            console.error("Save error", e);
+        } finally {
+            setIsSavingAiKey(false);
+        }
+    };
 
     const handleSave = async () => {
         setIsLoading(true);
@@ -71,13 +115,14 @@ export default function SettingsPage() {
         { id: "security", label: "Security", icon: Lock },
         { id: "notifications", label: "Notifications", icon: Bell },
         { id: "privacy", label: "Privacy", icon: Shield },
+        ...(session?.user?.role === "ADMIN" ? [{ id: "admin", label: "Admin Settings", icon: Settings }] : []),
     ];
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-12">
             <div>
                 <h1 className="text-3xl font-bold flex items-center gap-2 text-slate-900">
-                    <SettingsIcon className="w-8 h-8 text-blue-600" /> Settings
+                    <Settings className="w-8 h-8 text-blue-600" /> Settings
                 </h1>
                 <p className="text-slate-500 mt-1">Manage your account preferences</p>
             </div>
@@ -316,6 +361,62 @@ export default function SettingsPage() {
                                     </div>
                                     <Toggle checked={toggles.privacy.acceptMentorship} onChange={() => setToggles(p => ({ ...p, privacy: { ...p.privacy, acceptMentorship: !p.privacy.acceptMentorship } }))} />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ADMIN TAB */}
+                {activeTab === "admin" && session?.user?.role === "ADMIN" && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h2 className="text-lg font-bold mb-1 text-red-600">Platform-Wide API Settings</h2>
+                            <p className="text-sm text-slate-500 mb-6 font-medium">Critical configuration for system AI features (Chatbot & Skills Analyzer). This key will be used by everyone on the platform.</p>
+
+                            <div className="space-y-4 max-w-2xl">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold flex items-center gap-2">
+                                        Google AI Studio API Key (Gemini)
+                                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded uppercase">Encrypted</span>
+                                    </label>
+                                    <div className="relative group">
+                                        <Shield className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                        <input 
+                                            type="password" 
+                                            placeholder="AIzaSy..." 
+                                            value={aiKey}
+                                            onChange={(e) => setAiKey(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm" 
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400">Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-blue-500 underline">Google AI Studio</a>. This will override the one in your .env file.</p>
+                                </div>
+                                <div className="pt-2">
+                                    <button 
+                                        onClick={handleSaveAiKey}
+                                        disabled={isSavingAiKey}
+                                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-500/20 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-70"
+                                    >
+                                        {isSavingAiKey ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" /> Updating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="w-4 h-4" /> Save Global Key
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Additional Config Tip */}
+                        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex gap-4">
+                            <Bell className="w-6 h-6 text-blue-500 shrink-0" />
+                            <div>
+                                <h3 className="font-semibold text-blue-900">Pro-Tip for Admins</h3>
+                                <p className="text-sm text-blue-700 mt-1">Changes to the AI API key are instant. If your chatbot or skill analyzer stops working, verify your key has not reached its quota limits at the Google Cloud Console.</p>
                             </div>
                         </div>
                     </div>

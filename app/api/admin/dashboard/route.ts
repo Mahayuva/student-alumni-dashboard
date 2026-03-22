@@ -43,15 +43,26 @@ export async function GET() {
             }
         });
 
-        // 7 days mock or real data
+        // 7 days real data for new registrations
         const chartData: number[] = [];
         const today = new Date();
         for (let i = 6; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            // For demonstration, let's assume a simple trend or use a placeholder.
-            // In a real app, you'd query historical data for each day.
-            chartData.push(newRegistrations + (i - 3) * 2); // Simple linear trend around today's registrations
+            const startOfDay = new Date(today);
+            startOfDay.setDate(today.getDate() - i);
+            startOfDay.setHours(0, 0, 0, 0);
+            
+            const endOfDay = new Date(startOfDay);
+            endOfDay.setHours(23, 59, 59, 999);
+            
+            const count = await prisma.user.count({
+                where: {
+                    createdAt: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            });
+            chartData.push(count);
         }
 
         return NextResponse.json({

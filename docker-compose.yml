@@ -12,7 +12,10 @@ services:
       - NEXTAUTH_SECRET=changeme_in_production
       - NEXTAUTH_URL=http://localhost:3000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      db-setup:
+        condition: service_completed_successfully
     restart: always
 
   db:
@@ -25,7 +28,27 @@ services:
       - POSTGRES_DB=student_alumni
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d student_alumni"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
+
+  db-setup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/student_alumni?schema=public
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma generate && npx prisma db push && npx prisma db seed"
 
 volumes:
   postgres_data:
