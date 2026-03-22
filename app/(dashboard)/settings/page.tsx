@@ -72,6 +72,47 @@ export default function SettingsPage() {
         }
     });
 
+    // Fetch live toggles
+    useEffect(() => {
+        if (session?.user?.email) {
+            fetch("/api/settings/toggles")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        setToggles({
+                            notifications: {
+                                email: data.emailNotifications ?? true,
+                                jobAlerts: data.jobAlerts ?? true,
+                                events: data.eventReminders ?? true,
+                                mentorship: data.mentorshipRequests ?? true
+                            },
+                            privacy: {
+                                publicProfile: data.publicProfile ?? true,
+                                showEmail: data.showEmail ?? true,
+                                showLocation: data.showLocation ?? true,
+                                acceptMentorship: data.acceptMentorship ?? true
+                            }
+                        });
+                    }
+                })
+                .catch(err => console.error("Failed to fetch toggles", err));
+        }
+    }, [session?.user?.email]);
+
+    const updateToggle = async (key: string, value: boolean) => {
+        try {
+            const res = await fetch("/api/settings/toggles", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ [key]: value })
+            });
+            if (!res.ok) throw new Error("Update failed");
+        } catch (e) {
+            console.error("Toggle update failed", e);
+            // Revert state if needed or show error
+        }
+    };
+
     const handleSaveAiKey = async () => {
         setIsSavingAiKey(true);
         try {
@@ -98,15 +139,54 @@ export default function SettingsPage() {
             });
             const data = await res.json();
             if (res.ok) {
-                // We're good here
+                // Successful save
+                alert("Profile Updated Successfully!");
             } else {
                 console.error("Failed to save", data);
+                alert("Failed to save profile");
             }
         } catch (e) {
             console.error("Save error", e);
+            alert("An error occurred during save");
         } finally {
             setIsLoading(false);
-            window.location.reload(); // Quick refresh to show updated data globally
+        }
+    };
+
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+    const handleUpdatePassword = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            alert("Password must be at least 6 characters");
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            alert("Passwords do not match");
+            return;
+        }
+
+        setIsUpdatingPassword(true);
+        try {
+            const res = await fetch("/api/settings/password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ newPassword })
+            });
+
+            if (res.ok) {
+                alert("Password Updated Successfully!");
+                setNewPassword("");
+                setConfirmPassword("");
+            } else {
+                const data = await res.json();
+                alert(data.error || "Update failed");
+            }
+        } catch (e) {
+            console.error("Password update error", e);
+        } finally {
+            setIsUpdatingPassword(false);
         }
     };
 
@@ -272,15 +352,31 @@ export default function SettingsPage() {
                             <div className="space-y-4 max-w-xl">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">New Password</label>
-                                    <input type="password" placeholder="Enter new password" className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                                    <input 
+                                        type="password" 
+                                        placeholder="Enter new password" 
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Confirm New Password</label>
-                                    <input type="password" placeholder="Confirm new password" className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                                    <input 
+                                        type="password" 
+                                        placeholder="Confirm new password" 
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+                                    />
                                 </div>
                                 <div className="pt-2">
-                                    <button className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm">
-                                        Update Password
+                                    <button 
+                                        onClick={handleUpdatePassword}
+                                        disabled={isUpdatingPassword}
+                                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm disabled:opacity-50"
+                                    >
+                                        {isUpdatingPassword ? "Updating..." : "Update Password"}
                                     </button>
                                 </div>
                             </div>
@@ -299,28 +395,40 @@ export default function SettingsPage() {
                                         <div className="font-medium">Email notifications</div>
                                         <div className="text-sm text-slate-500">Receive updates via email</div>
                                     </div>
-                                    <Toggle checked={toggles.notifications.email} onChange={() => setToggles(p => ({ ...p, notifications: { ...p.notifications, email: !p.notifications.email } }))} />
+                                    <Toggle checked={toggles.notifications.email} onChange={() => {
+                                        setToggles(p => ({ ...p, notifications: { ...p.notifications, email: !p.notifications.email } }));
+                                        updateToggle("emailNotifications", !toggles.notifications.email);
+                                    }} />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="font-medium">Job alerts</div>
                                         <div className="text-sm text-slate-500">New job postings matching your profile</div>
                                     </div>
-                                    <Toggle checked={toggles.notifications.jobAlerts} onChange={() => setToggles(p => ({ ...p, notifications: { ...p.notifications, jobAlerts: !p.notifications.jobAlerts } }))} />
+                                    <Toggle checked={toggles.notifications.jobAlerts} onChange={() => {
+                                        setToggles(p => ({ ...p, notifications: { ...p.notifications, jobAlerts: !p.notifications.jobAlerts } }));
+                                        updateToggle("jobAlerts", !toggles.notifications.jobAlerts);
+                                    }} />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="font-medium">Event reminders</div>
                                         <div className="text-sm text-slate-500">Upcoming events you're registered for</div>
                                     </div>
-                                    <Toggle checked={toggles.notifications.events} onChange={() => setToggles(p => ({ ...p, notifications: { ...p.notifications, events: !p.notifications.events } }))} />
+                                    <Toggle checked={toggles.notifications.events} onChange={() => {
+                                        setToggles(p => ({ ...p, notifications: { ...p.notifications, events: !p.notifications.events } }));
+                                        updateToggle("eventReminders", !toggles.notifications.events);
+                                    }} />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="font-medium">Mentorship requests</div>
                                         <div className="text-sm text-slate-500">When someone wants to connect</div>
                                     </div>
-                                    <Toggle checked={toggles.notifications.mentorship} onChange={() => setToggles(p => ({ ...p, notifications: { ...p.notifications, mentorship: !p.notifications.mentorship } }))} />
+                                    <Toggle checked={toggles.notifications.mentorship} onChange={() => {
+                                        setToggles(p => ({ ...p, notifications: { ...p.notifications, mentorship: !p.notifications.mentorship } }));
+                                        updateToggle("mentorshipRequests", !toggles.notifications.mentorship);
+                                    }} />
                                 </div>
                             </div>
                         </div>
@@ -338,28 +446,40 @@ export default function SettingsPage() {
                                         <div className="font-medium">Public profile</div>
                                         <div className="text-sm text-slate-500">Allow others to view your profile</div>
                                     </div>
-                                    <Toggle checked={toggles.privacy.publicProfile} onChange={() => setToggles(p => ({ ...p, privacy: { ...p.privacy, publicProfile: !p.privacy.publicProfile } }))} />
+                                    <Toggle checked={toggles.privacy.publicProfile} onChange={() => {
+                                        setToggles(p => ({ ...p, privacy: { ...p.privacy, publicProfile: !p.privacy.publicProfile } }));
+                                        updateToggle("publicProfile", !toggles.privacy.publicProfile);
+                                    }} />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="font-medium">Show email</div>
                                         <div className="text-sm text-slate-500">Display email on your profile</div>
                                     </div>
-                                    <Toggle checked={toggles.privacy.showEmail} onChange={() => setToggles(p => ({ ...p, privacy: { ...p.privacy, showEmail: !p.privacy.showEmail } }))} />
+                                    <Toggle checked={toggles.privacy.showEmail} onChange={() => {
+                                        setToggles(p => ({ ...p, privacy: { ...p.privacy, showEmail: !p.privacy.showEmail } }));
+                                        updateToggle("showEmail", !toggles.privacy.showEmail);
+                                    }} />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="font-medium">Show location on map</div>
                                         <div className="text-sm text-slate-500">Appear in AlumFinder</div>
                                     </div>
-                                    <Toggle checked={toggles.privacy.showLocation} onChange={() => setToggles(p => ({ ...p, privacy: { ...p.privacy, showLocation: !p.privacy.showLocation } }))} />
+                                    <Toggle checked={toggles.privacy.showLocation} onChange={() => {
+                                        setToggles(p => ({ ...p, privacy: { ...p.privacy, showLocation: !p.privacy.showLocation } }));
+                                        updateToggle("showLocation", !toggles.privacy.showLocation);
+                                    }} />
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <div className="font-medium">Accept mentorship requests</div>
                                         <div className="text-sm text-slate-500">Allow students to connect</div>
                                     </div>
-                                    <Toggle checked={toggles.privacy.acceptMentorship} onChange={() => setToggles(p => ({ ...p, privacy: { ...p.privacy, acceptMentorship: !p.privacy.acceptMentorship } }))} />
+                                    <Toggle checked={toggles.privacy.acceptMentorship} onChange={() => {
+                                        setToggles(p => ({ ...p, privacy: { ...p.privacy, acceptMentorship: !p.privacy.acceptMentorship } }));
+                                        updateToggle("acceptMentorship", !toggles.privacy.acceptMentorship);
+                                    }} />
                                 </div>
                             </div>
                         </div>

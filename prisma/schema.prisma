@@ -51,6 +51,18 @@ model User {
   isVerified    Boolean   @default(false)   // Admin verification for Alumni
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  
+  // Privacy & Preferences
+  publicProfile    Boolean   @default(true)
+  showEmail        Boolean   @default(true)
+  showLocation     Boolean   @default(true)
+  acceptMentorship Boolean   @default(true)
+  
+  // Notification Preferences
+  emailNotifications Boolean  @default(true)
+  jobAlerts          Boolean  @default(true)
+  eventReminders     Boolean  @default(true)
+  mentorshipRequests Boolean  @default(true)
 
   profile           Profile?
   
