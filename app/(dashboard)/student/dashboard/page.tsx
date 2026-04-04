@@ -46,29 +46,29 @@ export default function StudentDashboard() {
     }, [session]);
 
     const statItems = [
-        { label: "Job Applications", value: (stats?.jobApplications || 0).toString(), trend: "View All", color: "bg-blue-50 text-blue-600", icon: Briefcase },
+        { label: "Job Applications", value: (stats?.jobApplications || 0).toString(), trend: "View All", color: "bg-primary-light text-primary", icon: Briefcase },
         { label: "Events Registered", value: (stats?.eventsRegistered || 0).toString(), trend: "View All", color: "bg-orange-50 text-orange-600", icon: Calendar },
         { label: "Mentors Connected", value: (stats?.connections || 0).toString(), trend: "View All", color: "bg-green-50 text-green-600", icon: Users },
         { label: "Profile Views", value: (stats?.profileViews || 0).toString(), trend: "Coming Soon", color: "bg-purple-50 text-purple-600", icon: TrendingUp },
     ];
 
     return (
-        <div className="space-y-8 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-12 max-w-[1600px] mx-auto pb-12">
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                         Welcome back, {session?.user?.name?.split(" ")[0] || "Student"}! 👋
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1">Here's what's happening in your network today</p>
+                    <p className="text-slate-500 font-medium mt-2">Here's what's happening in your network today</p>
                 </div>
-                <Link href="/student/skills" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm flex items-center gap-2 transition-colors">
+                <Link href="/student/skills" className="px-6 py-3 bg-primary hover:bg-black text-white rounded-2xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary-shadow hover:shadow-black/20 hover:-translate-y-0.5 active:scale-95">
                     <TrendingUp className="w-4 h-4" /> Analyze Skills
                 </Link>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statItems.map((stat, i) => (
                     <div key={i} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-4">
@@ -84,15 +84,21 @@ export default function StudentDashboard() {
             </div>
 
             {/* Profile Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white shadow-lg">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary/80 to-primary text-white shadow-lg">
                 <div className="absolute top-0 right-0 p-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                 <div className="relative p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                    <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-xl shrink-0">
-                        <img
-                            src={session?.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email}`}
-                            alt="Profile"
-                            className="w-full h-full object-cover bg-white"
-                        />
+                    <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-xl shrink-0 bg-white flex items-center justify-center">
+                        {session?.user?.image ? (
+                            <img
+                                src={session.user.image}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <span className="text-3xl font-bold text-primary">
+                                {session?.user?.name?.charAt(0).toUpperCase() || "S"}
+                            </span>
+                        )}
                     </div>
                     <div className="flex-1 text-center md:text-left">
                         <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
@@ -114,7 +120,7 @@ export default function StudentDashboard() {
                         </div>
                     </div>
                     <div>
-                        <Link href="/student/settings" className="px-4 py-2 bg-white text-indigo-600 hover:bg-blue-50 rounded-lg font-medium text-sm transition-colors shadow-sm">
+                        <Link href="/student/settings" className="px-4 py-2 bg-white text-primary hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors shadow-sm">
                             Edit Profile
                         </Link>
                     </div>
@@ -135,7 +141,7 @@ export default function StudentDashboard() {
                                     <div className="flex items-start gap-4">
                                         <div className={`p-2 rounded-full shrink-0 ${item.type === 'event' ? 'bg-orange-100 text-orange-600' :
                                             item.type === 'mentorship' ? 'bg-purple-100 text-purple-600' :
-                                                item.type === 'job' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                                                item.type === 'job' ? 'bg-green-100 text-green-600' : 'bg-primary-light text-primary'
                                             }`}>
                                             {item.type === 'event' ? <Calendar className="w-5 h-5" /> :
                                                 item.type === 'mentorship' ? <Users className="w-5 h-5" /> :
@@ -143,10 +149,10 @@ export default function StudentDashboard() {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
-                                                <h4 className="font-semibold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors">{item.title}</h4>
+                                                <h4 className="font-semibold text-sm text-slate-900 group-hover:text-primary transition-colors">{item.title}</h4>
                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${item.status === 'Pending' ? 'bg-orange-100 text-orange-600' :
                                                     item.status === 'Accepted' ? 'bg-green-100 text-green-600' :
-                                                        item.status === 'New' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'
+                                                        item.status === 'New' ? 'bg-primary-light text-primary' : 'bg-slate-100 text-slate-600'
                                                     }`}>{item.status}</span>
                                             </div>
                                             <p className="text-sm text-slate-500 mt-1">{item.desc}</p>
@@ -167,16 +173,16 @@ export default function StudentDashboard() {
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                 <Briefcase className="w-4 h-4 text-slate-400" /> Latest Jobs
                             </h3>
-                            <Link href="/student/jobs" className="text-xs text-indigo-600 font-medium hover:underline">View all &rarr;</Link>
+                            <Link href="/student/jobs" className="text-xs text-primary font-medium hover:underline">View all &rarr;</Link>
                         </div>
                         <div className="space-y-3">
                             {latestJobs.length === 0 ? (
                                 <p className="text-sm text-slate-500 text-center py-2">No active jobs found.</p>
                             ) : (
                                 latestJobs.map((job: any) => (
-                                    <div key={job.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 hover:border-indigo-200 transition-colors cursor-pointer group">
+                                    <div key={job.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 hover:border-primary/20 transition-colors cursor-pointer group">
                                         <div className="flex justify-between">
-                                            <h4 className="text-sm font-semibold group-hover:text-indigo-600 truncate">{job.title}</h4>
+                                            <h4 className="text-sm font-semibold group-hover:text-primary truncate">{job.title}</h4>
                                             <span className="text-[10px] text-slate-400">{job.type.replace("_", " ")}</span>
                                         </div>
                                         <p className="text-xs text-slate-500 mt-1">{job.company} • {job.location}</p>
@@ -204,12 +210,12 @@ export default function StudentDashboard() {
                                     const day = date.getDate();
                                     return (
                                         <div key={event.id} className="flex gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer">
-                                            <div className="bg-indigo-50 text-indigo-600 rounded-lg p-2 text-center min-w-[50px] flex flex-col justify-center">
+                                            <div className="bg-primary-light text-primary rounded-lg p-2 text-center min-w-[50px] flex flex-col justify-center">
                                                 <span className="text-xs font-bold uppercase">{month}</span>
                                                 <span className="text-lg font-bold">{day}</span>
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-semibold text-slate-900 hover:text-indigo-600 line-clamp-1">{event.title}</h4>
+                                                <h4 className="text-sm font-semibold text-slate-900 hover:text-primary line-clamp-1">{event.title}</h4>
                                                 <p className="text-xs text-slate-500 mt-0.5">{event._count?.registrations || 0} registered</p>
                                             </div>
                                         </div>

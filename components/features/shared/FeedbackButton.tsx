@@ -29,10 +29,10 @@ export function FeedbackButton() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1">What's on your mind?</label>
-                                <textarea rows={4} className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Share your suggestions or report a bug..."></textarea>
+                                <textarea rows={4} className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-primary outline-none" placeholder="Share your suggestions or report a bug..."></textarea>
                             </div>
 
-                            <button onClick={() => { alert("Feedback sent!"); setIsOpen(false); }} className="w-full py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                            <button onClick={() => { alert("Feedback sent!"); setIsOpen(false); }} className="w-full py-2 bg-primary text-white rounded-lg font-bold hover:bg-black transition-all shadow-md shadow-primary-shadow">
                                 Submit Feedback
                             </button>
                         </div>

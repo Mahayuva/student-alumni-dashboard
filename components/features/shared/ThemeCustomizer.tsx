@@ -112,7 +112,7 @@ export function ThemeCustomizer() {
                                         key={f.id}
                                         onClick={() => handleFontChange(f.id)}
                                         className={`w-full px-4 py-3 rounded-lg border text-left text-sm transition-all flex justify-between items-center ${fontFamily === f.id
-                                                ? "border-blue-500 bg-blue-50 text-blue-700"
+                                                ? "border-primary bg-primary-light text-primary"
                                                 : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                                             }`}
                                     >

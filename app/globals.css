@@ -5,7 +5,40 @@
   --background: #ffffff;
   --foreground: #171717;
   --primary: #2563eb;
+  --primary-light: rgba(37, 99, 235, 0.1);
+  --primary-shadow: rgba(37, 99, 235, 0.2);
   --base-font-size: 16px;
+}
+
+/* Theme Colors */
+[data-theme='blue'] {
+  --primary: #2563eb;
+  --primary-light: rgba(37, 99, 235, 0.1);
+  --primary-shadow: rgba(37, 99, 235, 0.2);
+}
+
+[data-theme='purple'] {
+  --primary: #7c3aed;
+  --primary-light: rgba(124, 58, 237, 0.1);
+  --primary-shadow: rgba(124, 58, 237, 0.2);
+}
+
+[data-theme='green'] {
+  --primary: #059669;
+  --primary-light: rgba(5, 150, 105, 0.1);
+  --primary-shadow: rgba(5, 150, 105, 0.2);
+}
+
+[data-theme='orange'] {
+  --primary: #ea580c;
+  --primary-light: rgba(234, 88, 12, 0.1);
+  --primary-shadow: rgba(234, 88, 12, 0.2);
+}
+
+[data-theme='rose'] {
+  --primary: #e11d48;
+  --primary-light: rgba(225, 29, 72, 0.1);
+  --primary-shadow: rgba(225, 29, 72, 0.2);
 }
 
 body {
@@ -14,7 +47,6 @@ body {
   font-family: 'Inter', sans-serif;
   font-size: var(--base-font-size);
   background-attachment: fixed;
-  /* Optional: Add a light subtle gradient if desired, or just solid background */
 }
 
 /* Font Families */
@@ -24,11 +56,16 @@ body[data-font='inter'] {
 
 body[data-font='serif'] {
   font-family: 'Playfair Display', serif;
-  /* Ensure this font is loaded if not already, or use generic serif */
 }
 
 body[data-font='mono'] {
   font-family: 'Fira Code', monospace;
+}
+
+@theme {
+    --color-primary: var(--primary);
+    --color-primary-light: var(--primary-light);
+    --color-primary-shadow: var(--primary-shadow);
 }
 
 @layer utilities {
@@ -45,4 +82,29 @@ body[data-font='mono'] {
   }
 }
 
-/* Custom utilities removed for v4 compatibility */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out infinite;
+}

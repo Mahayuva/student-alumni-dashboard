@@ -80,8 +80,14 @@ export default function SuccessStoriesPage() {
                     <div key={story.id} className="bg-white rounded-xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all group">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
-                                    <img src={story.author?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${story.author?.name || "User"}`} alt={story.author?.name || "Author"} className="w-full h-full object-cover" />
+                                <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center text-slate-500 font-bold border border-slate-200">
+                                    {story.author?.image ? (
+                                        <img src={story.author.image} alt={story.author?.name || "Author"} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-sm uppercase">
+                                            {story.author?.name?.charAt(0) || "A"}
+                                        </span>
+                                    )}
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-sm text-slate-900">{story.author?.name || "Anonymous Member"}</h4>

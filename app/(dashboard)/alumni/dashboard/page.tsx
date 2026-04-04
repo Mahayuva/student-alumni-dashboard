@@ -46,47 +46,60 @@ export default function AlumniDashboard() {
         }
     }, [session]);
 
-    const userJobs = jobs; // Alternatively, jobs.filter(j => j.postedById === session?.user?.id); but the prompt implies it should connect to admin as well. Let's just show the jobs fetched.
+    const handleStatusUpdate = async (requestId: string, status: "ACCEPTED" | "REJECTED") => {
+        try {
+            const res = await fetch(`/api/mentorship/${requestId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status }),
+            });
 
+            if (res.ok) {
+                // Refresh data locally
+                setMentorships(prev => prev.map(m => m.id === requestId ? { ...m, status } : m));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const userJobs = jobs; 
     const userMentorships = mentorships.filter(m => m.mentorId === session?.user?.id);
     const pendingRequests = userMentorships.filter(m => m.status === "PENDING");
     const activeStudents = userMentorships.filter(m => m.status === "ACCEPTED");
 
-    // Mock data for requests layout
     const stats = [
         { label: "Mentorship Requests", value: pendingRequests.length.toString(), trend: "", icon: UserPlus, color: "bg-purple-50 text-purple-600" },
-        { label: "Students Connected", value: activeStudents.length.toString(), trend: "", icon: MessageSquare, color: "bg-blue-50 text-blue-600" },
+        { label: "Students Connected", value: activeStudents.length.toString(), trend: "", icon: MessageSquare, color: "bg-primary-light text-primary" },
         { label: "Jobs Posted", value: jobs.length.toString(), trend: "", icon: Briefcase, color: "bg-green-50 text-green-600" },
         { label: "Events Created", value: events.length.toString(), trend: "", icon: Calendar, color: "bg-orange-50 text-orange-600" },
     ];
 
     return (
-        <div className="space-y-8 max-w-[1600px] mx-auto pb-10">
-            {/* Header */}
-            <div className="flex items-center justify-between">
+        <div className="space-y-12 max-w-[1600px] mx-auto pb-12">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                         Welcome back, {session?.user?.name?.split(" ")[0] || "Alumni"}! 🎓
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1">Make a difference by guiding the next generation</p>
+                    <p className="text-slate-500 font-medium mt-2">Make a difference by guiding the next generation</p>
                 </div>
-                <div className="flex gap-3">
-                    <Link href="/alumni/events/create" className="px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2">
+                <div className="flex gap-4">
+                    <Link href="/alumni/events/create" className="px-6 py-3 border border-slate-200 bg-white rounded-2xl text-sm font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm hover:shadow-md">
                         <Plus className="w-4 h-4" /> Create Event
                     </Link>
-                    <Link href="/alumni/jobs/create" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm shadow-blue-200">
+                    <Link href="/alumni/jobs/create" className="px-6 py-3 bg-primary hover:bg-black text-white rounded-2xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary-shadow hover:shadow-black/20 hover:-translate-y-0.5 active:scale-95">
                         <Plus className="w-4 h-4" /> Post Job
                     </Link>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, i) => (
                     <div key={i} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                        {/* Decorative circle */}
                         <div className={`absolute -right-4 -top-4 w-20 h-20 rounded-full opacity-10 ${stat.color.replace('text', 'bg')}`}></div>
-
                         <div className="flex justify-between items-start mb-4 relative z-10">
                             <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
                             <div className={`p-2 rounded-lg ${stat.color}`}>
@@ -100,26 +113,28 @@ export default function AlumniDashboard() {
             </div>
 
             {/* Profile Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary to-cyan-500 text-white shadow-lg">
                 <div className="absolute bottom-0 left-0 w-full h-[50%] bg-white/5 backdrop-blur-sm"></div>
                 <div className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 md:gap-8 relative z-10">
-                    <div className="w-24 h-24 rounded-full border-4 border-white/40 shadow-xl overflow-hidden bg-white">
-                        <img
-                            src={session?.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.email || "Alumni"}`}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                        />
+                    <div className="w-24 h-24 rounded-full border-4 border-white/40 shadow-xl overflow-hidden bg-white flex items-center justify-center text-primary">
+                        {session?.user?.image ? (
+                            <img src={session.user.image} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <span className="text-3xl font-bold uppercase truncate">
+                                {session?.user?.name?.charAt(0) || "A"}
+                            </span>
+                        )}
                     </div>
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
                             <h2 className="text-2xl font-bold">{session?.user?.name}</h2>
                             <span className="bg-white/20 px-3 py-0.5 rounded-full text-xs font-semibold">Alumni</span>
                         </div>
-                        <p className="text-blue-100 mb-2">{session?.user?.email}</p>
-                        <p className="text-xs text-blue-50 opacity-80 max-w-xl">Connecting with the community of Institute Alumni.</p>
+                        <p className="text-slate-50 mb-2 opacity-90">{session?.user?.email}</p>
+                        <p className="text-xs text-white opacity-80 max-w-xl">Connecting with the community of Institute Alumni.</p>
                     </div>
                     <div>
-                        <Link href="/settings" className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 block">
+                        <Link href="/settings" className="px-4 py-2 bg-white text-primary rounded-lg font-medium text-sm hover:bg-slate-50 transition-colors flex items-center gap-2 block">
                             <Edit className="w-4 h-4" /> Edit Profile
                         </Link>
                     </div>
@@ -127,7 +142,6 @@ export default function AlumniDashboard() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Main Content - Pending Requests */}
                 <div className="xl:col-span-2 space-y-6">
                     <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
                         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
@@ -139,8 +153,14 @@ export default function AlumniDashboard() {
                         <div className="divide-y divide-slate-100">
                             {pendingRequests.map((req) => (
                                 <div key={req.id} className="p-5 flex flex-col md:flex-row gap-4 hover:bg-slate-50 transition-colors">
-                                    <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0 overflow-hidden">
-                                        <img src={req.mentee?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.mentee?.name || req.menteeId}`} alt={req.mentee?.name} className="w-full h-full object-cover" />
+                                    <div className="w-12 h-12 rounded-full bg-zinc-100 shrink-0 overflow-hidden flex items-center justify-center text-slate-600 font-bold border border-slate-200 shadow-sm">
+                                        {req.mentee?.image ? (
+                                            <img src={req.mentee.image} alt={req.mentee?.name || "Student"} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-lg uppercase">
+                                                {req.mentee?.name?.charAt(0) || "S"}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between items-start mb-1">
@@ -156,14 +176,17 @@ export default function AlumniDashboard() {
                                             </p>
                                         )}
                                         <div className="flex gap-3 mt-4">
-                                            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                                            <button
+                                                onClick={() => handleStatusUpdate(req.id, "ACCEPTED")}
+                                                className="px-5 py-2.5 bg-primary hover:bg-black text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary-shadow hover:shadow-black/20 hover:-translate-y-0.5 active:scale-95"
+                                            >
                                                 <Check className="w-4 h-4" /> Accept
                                             </button>
-                                            <button className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2 transition-colors">
-                                                <MessageSquare className="w-4 h-4" /> Message
-                                            </button>
-                                            <button className="px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors">
-                                                <X className="w-4 h-4" />
+                                            <button
+                                                onClick={() => handleStatusUpdate(req.id, "REJECTED")}
+                                                className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all shadow-sm"
+                                            >
+                                                <X className="w-4 h-4" /> REJECT
                                             </button>
                                         </div>
                                     </div>
@@ -177,16 +200,53 @@ export default function AlumniDashboard() {
                         </div>
                     </div>
 
-                    {/* Recent Events List */}
+                    {/* Active Connections List */}
+                    <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 mt-8">
+                        <div className="flex justify-between items-center mb-4 border-b border-slate-50 pb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-primary" /> Active Connections
+                            </h3>
+                            <Badge variant="secondary" className="bg-primary-light text-primary">{activeStudents.length} Connected</Badge>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {activeStudents.map((req) => (
+                                <div key={req.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 hover:bg-white hover:border-primary/20 hover:shadow-xl transition-all group">
+                                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary font-bold shadow-sm">
+                                        {req.mentee?.image ? (
+                                            <img src={req.mentee.image} alt={req.mentee.name} className="w-full h-full object-cover rounded-xl" />
+                                        ) : (
+                                            req.mentee?.name?.charAt(0) || "S"
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-slate-900 group-hover:text-primary transition-colors truncate">{req.mentee?.name}</h4>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Ready to chat</p>
+                                    </div>
+                                    <Link 
+                                        href={`/alumni/messages/${req.menteeId}`}
+                                        className="p-3 bg-white text-primary rounded-xl hover:bg-black hover:text-white transition-all shadow-sm border border-slate-100"
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            ))}
+                            {activeStudents.length === 0 && (
+                                <div className="col-span-full py-8 text-center text-slate-400 text-sm italic">
+                                    No active student connections yet.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-800">Recent Events</h3>
-                            <Link href="/alumni/events/create" className="text-sm text-blue-600 font-medium hover:underline">Post &rarr;</Link>
+                            <Link href="/alumni/events/create" className="text-sm text-primary font-medium hover:underline">Post &rarr;</Link>
                         </div>
                         <div className="space-y-4">
                             {events.slice(0, 3).map((event: any, idx: number) => (
                                 <div key={idx} className="flex gap-4 items-start">
-                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-full shrink-0 mt-1">
+                                    <div className="p-2 bg-primary-light text-primary rounded-full shrink-0 mt-1">
                                         <Calendar className="w-4 h-4" />
                                     </div>
                                     <div>
@@ -202,7 +262,6 @@ export default function AlumniDashboard() {
                     </div>
                 </div>
 
-                {/* Sidebar - Your Jobs */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
                         <div className="flex justify-between items-center mb-4">
@@ -234,11 +293,10 @@ export default function AlumniDashboard() {
                         </div>
                     </div>
 
-                    {/* Impact Overview */}
                     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-blue-500" /> Impact Overview
+                                <TrendingUp className="w-4 h-4 text-primary" /> Impact Overview
                             </h3>
                         </div>
                         <div className="space-y-4">

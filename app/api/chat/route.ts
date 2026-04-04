@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
         // 4. Build Intelligent System Prompt for Gemini
         const systemPrompt = `
-You are the AlumniConnect Premium AI Bot, a pro-level machine learning career advisor.
+You are the Alumni Connect Premium AI Bot, a pro-level machine learning career advisor.
 You help students on the platform by:
 1. Recommending open jobs posted on the dashboard.
 2. Recommending specific Alumni to DM based on matching fields, skills, or industries.

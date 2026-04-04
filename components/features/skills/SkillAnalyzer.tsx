@@ -79,7 +79,7 @@ export function SkillAnalyzer() {
                 {/* Upload Area */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-900">
-                        <FileText className="w-5 h-5 text-indigo-600" /> Resume Analysis
+                        <FileText className="w-5 h-5 text-primary" /> Resume Analysis
                     </h2>
                     <UploadResume
                         onUpload={handleUpload}
@@ -178,12 +178,12 @@ export function SkillAnalyzer() {
                 {analysisDone && (
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-indigo-600" /> Extracted Skills
+                            <BarChart3 className="w-5 h-5 text-primary" /> Extracted Skills
                         </h2>
                         {mySkills.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {mySkills.map((skill) => (
-                                    <Badge key={skill} className="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                    <Badge key={skill} className="px-3 py-1.5 text-sm bg-primary-light text-primary border border-primary/10">
                                         {skill}
                                     </Badge>
                                 ))}
@@ -198,7 +198,7 @@ export function SkillAnalyzer() {
                 {analysisDone && summary && (
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-indigo-600" /> Professional Summary
+                            <FileText className="w-5 h-5 text-primary" /> Professional Summary
                         </h2>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
                             {summary}
@@ -228,10 +228,10 @@ export function SkillAnalyzer() {
                     <div className="space-y-4">
                         <h3 className="font-bold text-lg text-slate-800">Recommended Jobs based on your profile</h3>
                         {matchedJobs.map((job) => (
-                            <div key={job.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors">
+                            <div key={job.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-primary/30 transition-colors">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-bold text-lg text-indigo-600">{job.title}</h4>
+                                        <h4 className="font-bold text-lg text-primary">{job.title}</h4>
                                         <p className="text-slate-600 font-medium">{job.company}</p>
                                         <p className="text-sm text-slate-500 mt-1">{job.location}</p>
                                     </div>
@@ -277,9 +277,9 @@ export function SkillAnalyzer() {
                 )}
 
                 {/* Generic Tip */}
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-xl text-white shadow-md">
+                <div className="bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary-shadow p-6 rounded-xl text-white">
                     <h3 className="font-bold text-lg mb-2">Pro Tip</h3>
-                    <p className="text-indigo-100 mb-4 text-sm">
+                    <p className="text-white/80 mb-4 text-sm font-medium">
                         Tailoring your resume keywords to specific job descriptions typically increases interview callbacks by 30%.
                     </p>
                 </div>

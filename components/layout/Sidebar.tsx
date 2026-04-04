@@ -64,41 +64,19 @@ export function Sidebar({ role }: SidebarProps) {
     const items = sidebarItems[role];
 
     return (
-        <aside className="w-64 bg-white border-r border-slate-200 h-screen flex flex-col fixed left-0 top-0 z-30">
-            <div className="p-6">
-                <h1 className="text-xl font-bold text-slate-900 flex items-center gap-3 mb-8">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shrink-0">
-                        <GraduationCap className="w-5 h-5" />
+        <aside className="w-[272px] bg-white/50 border-r border-white/30 h-screen flex flex-col fixed left-0 top-0 z-30 backdrop-blur-xl">
+            <div className="p-8 pb-4">
+                <h1 className="text-xl font-bold flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-black/10">
+                        <GraduationCap className="w-6 h-6" />
                     </div>
-                    AlumniConnect
+                    <span className="font-bold text-slate-900 flex items-center gap-1.3">
+                        Alumni&nbsp;<span className="text-primary">Connect</span>
+                    </span>
                 </h1>
-
-                {/* User Profile Section */}
-                <div className="mb-6 bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden">
-                        {session?.user?.image ? (
-                            <img src={session.user.image} alt={session.user.name || session?.user?.email || "User"} className="w-full h-full object-cover" />
-                        ) : (
-                            (session?.user?.name || session?.user?.email || "U").charAt(0).toUpperCase()
-                        )}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                        <span className="font-bold text-slate-900 text-sm truncate">
-                            {session?.user?.name || session?.user?.email?.split("@")[0] || "User"}
-                        </span>
-                        <span className={cn(
-                            "text-[10px] px-2 py-0.5 rounded-full w-fit font-medium text-white uppercase tracking-wider",
-                            role === "student" ? "bg-purple-500" :
-                                role === "alumni" ? "bg-blue-500" :
-                                    "bg-slate-500"
-                        )}>
-                            {role}
-                        </span>
-                    </div>
-                </div>
             </div>
 
-            <nav className="flex-1 px-4 space-y-1">
+            <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
                 {items.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -106,28 +84,28 @@ export function Sidebar({ role }: SidebarProps) {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group font-medium",
+                                "flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all duration-300 group text-sm font-medium",
                                 isActive
-                                    ? "bg-blue-600 text-white shadow-sm"
-                                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                    ? "bg-white text-slate-900 shadow-sm shadow-black/5 ring-1 ring-black/5"
+                                    : "text-slate-500 hover:text-slate-900 hover:bg-primary-light"
                             )}
                         >
-                            <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
+                            <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-slate-900 fill-slate-900/10" : "text-slate-400 group-hover:text-slate-600")} />
                             <span>{item.label}</span>
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="p-6">
+            <div className="p-8 mt-auto">
                 <button
                     onClick={() => signOut({ callbackUrl: "/login" })}
-                    className="flex items-center gap-3 px-6 py-4 w-full text-left text-red-500 hover:bg-red-50 rounded-2xl transition-all hover:shadow-md group"
+                    className="flex items-center gap-3 px-4 py-3 w-full text-left text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-2xl transition-all font-semibold group text-sm"
                 >
-                    <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    <span className="font-bold">Logout</span>
+                    <LogOut className="w-5 h-5 opacity-70 group-hover:opacity-100" />
+                    <span>Logout</span>
                 </button>
             </div>
-        </aside >
+        </aside>
     );
 }

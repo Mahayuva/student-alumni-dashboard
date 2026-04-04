@@ -52,8 +52,8 @@ export function UploadResume({ onUpload, currentFile, onRemove, isAnalyzing }: U
             {!currentFile ? (
                 <div
                     className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive
-                        ? "border-indigo-500 bg-indigo-50"
-                        : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                        ? "border-primary bg-primary-light"
+                        : "border-slate-200 hover:border-primary/30 hover:bg-slate-50"
                         }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -69,7 +69,7 @@ export function UploadResume({ onUpload, currentFile, onRemove, isAnalyzing }: U
                         disabled={isAnalyzing}
                     />
                     <div className="flex flex-col items-center gap-3">
-                        <div className="p-3 bg-indigo-100 text-indigo-600 rounded-full">
+                        <div className="p-3 bg-primary-light text-primary rounded-full">
                             <Upload className="w-6 h-6" />
                         </div>
                         <div>
@@ -100,7 +100,7 @@ export function UploadResume({ onUpload, currentFile, onRemove, isAnalyzing }: U
                     )}
 
                     {isAnalyzing && (
-                        <div className="flex items-center gap-2 text-indigo-600 text-sm font-medium">
+                        <div className="flex items-center gap-2 text-primary text-sm font-medium">
                             <Loader2 className="w-4 h-4 animate-spin" />
                             <span>Analyzing...</span>
                         </div>

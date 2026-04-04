@@ -21,24 +21,31 @@ export default function LoginPage() {
             const res = await signIn("credentials", {
                 email,
                 password,
+                role: loginRole, // Pass the selected portal role
                 redirect: false,
             });
 
             if (res?.error) {
-                alert("Invalid credentials");
+                if (res.error === "NOT_AUTHORIZED_ROLE") {
+                    alert(`Access Denied: You do not have permissions to login for portals as a ${loginRole.toUpperCase()}. Please use the correct tab.`);
+                } else {
+                    alert("Invalid credentials. Please check your email and password.");
+                }
                 setIsLoading(false);
                 return;
             }
 
-            // Redirect based on role (this logic might need adjustment if role is not in session immediately available to client without refresh, 
-            // but for now we'll trust the flow or standard redirect)
-            // Ideally getting the session here to check role would be better, but let's stick to the requested flow.
-            // Actually, let's just redirect to the dashboard home, and let middleware/layout handle specifics if needed? 
-            // The original code had role-based redirect.
-            // Let's assume the user is redirected to the main dashboard or we can fetch the session.
-            // For simplicity and speed as requested:
-            if (loginRole === "admin") {
+            // Redirect based on the actual authenticated user's role
+            // We'll use a small timeout to let the session propagate or use a separate fetch
+            const sessionRes = await fetch("/api/auth/session");
+            const session = await sessionRes.json();
+            
+            const userRole = session?.user?.role;
+
+            if (userRole === "ADMIN") {
                 window.location.href = "/admin/dashboard";
+            } else if (userRole === "ALUMNI") {
+                window.location.href = "/alumni/dashboard";
             } else {
                 window.location.href = "/student/dashboard";
             }

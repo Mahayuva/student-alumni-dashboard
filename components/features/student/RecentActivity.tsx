@@ -40,10 +40,10 @@ export function RecentActivity() {
 
                         if (item.type === "event") {
                             icon = Calendar;
-                            color = "text-blue-600 bg-blue-100";
+                            color = "text-orange-600 bg-orange-100";
                         } else if (item.type === "mentorship") {
                             icon = UserPlus;
-                            color = "text-violet-600 bg-violet-100";
+                            color = "text-primary bg-primary-light";
                         } else if (item.type === "job") {
                             icon = CheckCircle2;
                             color = "text-green-600 bg-green-100";
@@ -72,7 +72,7 @@ export function RecentActivity() {
     return (
         <div className="glass-card rounded-3xl p-6 h-full border-none bg-white/50 backdrop-blur-sm shadow-sm border border-slate-200">
             <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-800">
-                <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                <div className="p-2 bg-primary-light rounded-lg text-primary">
                     <Clock className="w-5 h-5" />
                 </div>
                 Recent Activities
@@ -80,20 +80,20 @@ export function RecentActivity() {
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
             ) : activities.length === 0 ? (
                 <div className="text-center py-10 text-slate-500">
                     <p>No recent activity.</p>
                 </div>
             ) : (
-                <div className="space-y-6 relative ml-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-violet-500 before:to-pink-500/20 before:rounded-full pl-6">
+                <div className="space-y-6 relative ml-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-primary before:to-primary/20 before:rounded-full pl-6">
                     {activities.map((activity) => {
                         const Icon = activity.icon || Info;
                         return (
                             <div key={activity.id} className="relative group">
                                 <div className={`absolute -left-[31px] w-4 h-4 rounded-full border-4 border-white shadow-sm z-10 ${activity.status === "CONFIRMED" || activity.status === "ACCEPTED" ? "bg-green-500" :
-                                    activity.status === "PENDING" ? "bg-amber-500" : "bg-blue-500"
+                                    activity.status === "PENDING" ? "bg-amber-500" : "bg-primary"
                                     }`}></div>
 
                                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:scale-[1.02] transition-all cursor-default">
@@ -104,11 +104,11 @@ export function RecentActivity() {
                                         <span className="text-xs font-medium text-slate-400">{(activity as any).formattedDate}</span>
                                     </div>
 
-                                    <p className="font-bold text-slate-800 leading-snug mb-2 group-hover:text-violet-700 transition-colors">{activity.title}</p>
+                                    <p className="font-bold text-slate-800 leading-snug mb-2 group-hover:text-primary transition-colors">{activity.title}</p>
 
                                     <div className="flex items-center gap-2">
                                         <span className={`text-xs font-bold px-2 py-1 rounded-md ${activity.status === "CONFIRMED" || activity.status === "ACCEPTED" ? "text-green-700 bg-green-50" :
-                                            activity.status === "PENDING" ? "text-amber-700 bg-amber-50" : "text-blue-700 bg-blue-50"
+                                            activity.status === "PENDING" ? "text-amber-700 bg-amber-50" : "text-primary bg-primary-light"
                                             }`}>
                                             {activity.status}
                                         </span>
@@ -120,7 +120,7 @@ export function RecentActivity() {
                 </div>
             )}
 
-            <button className="w-full mt-8 py-3.5 text-sm font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-xl transition-all hover:shadow-sm">
+            <button className="w-full mt-8 py-3.5 text-sm font-bold text-primary bg-primary-light hover:bg-primary hover:text-white transition-all hover:shadow-sm rounded-xl">
                 View All History
             </button>
         </div>

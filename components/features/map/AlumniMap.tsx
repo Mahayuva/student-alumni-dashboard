@@ -92,7 +92,7 @@ export default function AlumniMap() {
                     onClick={() => setShowNearMe(!showNearMe)}
                     disabled={!userLocation}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showNearMe
-                        ? "bg-blue-600 text-white"
+                        ? "bg-primary text-white"
                         : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                         }`}
                 >
@@ -124,7 +124,7 @@ export default function AlumniMap() {
                                         )}
                                         <div>
                                             <h3 className="font-bold text-sm text-slate-900 leading-tight">{user.name}</h3>
-                                            <span className="text-[10px] uppercase font-bold text-blue-600">{user.role}</span>
+                                            <span className="text-[10px] uppercase font-bold text-primary">{user.role}</span>
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-600 mb-1">{user.profile?.headline}</p>
@@ -133,7 +133,7 @@ export default function AlumniMap() {
                                     </p>
                                     <button
                                         onClick={() => window.open(`mailto:${user.email}`)}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1.5 px-3 rounded-md transition-colors shadow-sm flex items-center justify-center gap-1"
+                                        className="w-full bg-primary hover:bg-black text-white text-[10px] font-bold py-1.5 px-3 rounded-md transition-colors shadow-sm flex items-center justify-center gap-1"
                                     >
                                         Connect & View Profile
                                     </button>

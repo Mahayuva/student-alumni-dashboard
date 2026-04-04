@@ -18,6 +18,7 @@ export const authOptions: NextAuthOptions = {
             credentials: {
                 email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" },
+                role: { label: "Role", type: "text" },
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
@@ -36,6 +37,11 @@ export const authOptions: NextAuthOptions = {
 
                 if (!isPasswordValid) {
                     return null;
+                }
+
+                // Check if the requested role matches the user's role in database
+                if (credentials?.role && user.role !== credentials.role.toUpperCase()) {
+                    throw new Error(`NOT_AUTHORIZED_ROLE`);
                 }
 
                 return {

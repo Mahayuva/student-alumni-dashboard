@@ -63,6 +63,14 @@ export async function GET(req: Request) {
                         github: true,
                         website: true
                     }
+                },
+                mentorshipReceived: {
+                    where: {
+                        menteeId: session.user.id
+                    },
+                    select: {
+                        status: true
+                    }
                 }
             },
             orderBy: {

@@ -42,6 +42,6 @@ export const eventSchema = z.object({
 });
 
 export const mentorshipRequestSchema = z.object({
-    mentorId: z.string().cuid(),
-    message: z.string().min(10),
+    mentorId: z.string(),
+    message: z.string().optional(),
 });

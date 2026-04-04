@@ -31,7 +31,7 @@ export function JobCard({ job, isAlumniView = false }: JobCardProps) {
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xl shrink-0">
+                    <div className="w-12 h-12 rounded-lg bg-primary-light flex items-center justify-center text-primary font-bold text-xl shrink-0">
                         {job.postedBy.image ? (
                             <img src={job.postedBy.image} alt={job.company} className="w-full h-full object-cover rounded-lg" />
                         ) : (
@@ -39,13 +39,13 @@ export function JobCard({ job, isAlumniView = false }: JobCardProps) {
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                        <h3 className="font-bold text-lg text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
                             {job.title}
                         </h3>
                         <p className="text-slate-500 text-sm font-medium">{job.company}</p>
                     </div>
                 </div>
-                <Badge variant={job.type === "INTERNSHIP" ? "secondary" : "default"} className={job.type === "INTERNSHIP" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"}>
+                <Badge variant={job.type === "INTERNSHIP" ? "secondary" : "default"} className={job.type === "INTERNSHIP" ? "bg-primary-light text-primary hover:bg-primary/20" : "bg-primary text-white hover:bg-black"}>
                     {job.type}
                 </Badge>
             </div>
@@ -91,7 +91,7 @@ export function JobCard({ job, isAlumniView = false }: JobCardProps) {
                                 alert("Failed to apply");
                             }
                         }}
-                        className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="flex-1 px-4 py-2 bg-primary hover:bg-black text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-primary-shadow"
                     >
                         Apply Now
                     </button>

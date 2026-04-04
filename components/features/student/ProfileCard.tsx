@@ -70,12 +70,18 @@ export function ProfileCard() {
             <div className="px-6 pb-6 flex-1 flex flex-col relative">
                 <div className="flex justify-between items-end -mt-10 mb-4">
                     <div className="relative">
-                        <div className="w-24 h-24 rounded-full border-4 border-white bg-white shadow-sm overflow-hidden">
-                            <img
-                                src={session?.user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session?.user?.name || 'User'}`}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="w-24 h-24 rounded-full border-4 border-white bg-white shadow-sm overflow-hidden flex items-center justify-center text-slate-900 border-slate-100">
+                            {session?.user?.image ? (
+                                <img
+                                    src={session.user.image}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-3xl font-bold uppercase truncate">
+                                    {session?.user?.name?.charAt(0) || "U"}
+                                </span>
+                            )}
                         </div>
                     </div>
                     <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-medium rounded-lg text-sm hover:bg-slate-50 transition-colors shadow-sm mb-2 flex items-center gap-2">

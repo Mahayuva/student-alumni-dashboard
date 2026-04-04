@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Search, Filter, MapPin, Building, GraduationCap, Github, Linkedin, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { toast } from "react-hot-toast";
@@ -48,36 +49,61 @@ export function AlumniDirectory() {
         );
     });
 
-    const handleConnect = (id: string) => {
-        toast.success("Connection request sent!");
-        // Logic to send connection request would go here
+    const handleConnect = async (alumId: string) => {
+        try {
+            const res = await fetch("/api/mentorship", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mentorId: alumId }),
+            });
+
+            if (res.ok) {
+                toast.success("Mentorship request sent!");
+                fetchAlumni(); // Refresh to show pending status
+            } else {
+                toast.error("Failed to send request.");
+            }
+        } catch (error) {
+            toast.error("An error occurred.");
+        }
     };
+
+    const alumniWithStatus = filteredAlumni.map(alum => {
+        // alum.mentionshipReceived is the mentorship the student sent to this alumni
+        const request = alum.mentorshipReceived?.[0]; 
+        return {
+            ...alum,
+            connectionStatus: request?.status || null,
+        };
+    });
 
     return (
         <div className="space-y-6">
             {/* Search and Filter Bar */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <div className="bg-white/70 backdrop-blur-md p-6 rounded-3xl shadow-xl shadow-blue-50/50 border border-white flex flex-col md:flex-row gap-6">
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 w-5 h-5 transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search alumni by name, company, or industry..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-500"
+                        placeholder="Search by name, company, or expertise..."
+                        className="w-full pl-14 pr-6 py-4 bg-slate-50/50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all text-slate-900 placeholder:text-slate-400 font-medium"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
 
-                <div className="flex items-center gap-2 min-w-[200px]">
-                    <Filter className="text-slate-400 w-5 h-5 shrink-0" />
+                <div className="flex items-center gap-3 min-w-[240px] group">
+                    <div className="p-3 bg-white rounded-xl shadow-sm border border-slate-100">
+                        <Filter className="text-slate-400 group-focus-within:text-blue-500 w-5 h-5 transition-colors" />
+                    </div>
                     <select
-                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none cursor-pointer text-slate-900"
+                        className="w-full p-4 bg-slate-50/50 border border-slate-100 rounded-2xl outline-none cursor-pointer text-slate-700 font-bold text-sm focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
                         value={selectedBatch}
                         onChange={(e) => setSelectedBatch(e.target.value)}
                     >
-                        <option value="all">All Batches</option>
+                        <option value="all">ALL BATCHES</option>
                         {batches.map(batch => (
-                            <option key={batch} value={batch}>Class of {batch}</option>
+                            <option key={batch} value={batch}>CLASS OF {batch}</option>
                         ))}
                     </select>
                 </div>
@@ -88,84 +114,89 @@ export function AlumniDirectory() {
                 <div className="text-center py-12 text-slate-500">Loading alumni directory...</div>
             ) : filteredAlumni.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredAlumni.map((alum) => (
-                        <div key={alum.id} className="bg-white rounded-xl overflow-hidden border border-slate-200 hover:border-blue-300 transition-all shadow-sm group">
-                            <div className="p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden shrink-0 border-2 border-slate-100">
+                    {alumniWithStatus.map((alum) => (
+                        <div key={alum.id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-xl transition-all shadow-sm group">
+                            <div className="p-8">
+                                <div className="flex items-start gap-5">
+                                    <div className="w-20 h-20 rounded-2xl bg-zinc-50 overflow-hidden shrink-0 border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
                                         {alum.image ? (
                                             <img src={alum.image} alt={alum.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 font-bold text-2xl">
+                                            <div className="w-full h-full flex items-center justify-center bg-primary-light text-primary font-black text-3xl">
                                                 {alum.name?.charAt(0) || "A"}
                                             </div>
                                         )}
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-black text-xl text-slate-900 group-hover:text-primary transition-colors truncate">
                                             {alum.name}
                                         </h3>
-                                        <p className="text-slate-500 text-sm font-medium">
+                                        <p className="text-slate-500 text-sm font-bold tracking-tight">
                                             {alum.profile?.currentRole || "Alumni"}
                                         </p>
                                         {alum.profile?.company && (
-                                            <p className="text-slate-400 text-xs">at {alum.profile.company}</p>
+                                            <p className="text-slate-400 text-[10px] uppercase font-black mt-1">at {alum.profile.company}</p>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="mt-4 space-y-2">
-                                    {alum.profile?.company && (
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <Building className="w-4 h-4 text-slate-400" />
-                                            <span>{alum.profile.company}</span>
-                                        </div>
-                                    )}
-                                    {(alum.profile?.city || alum.profile?.country) && (
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <MapPin className="w-4 h-4 text-slate-400" />
-                                            <span>{[alum.profile.city, alum.profile.country].filter(Boolean).join(", ")}</span>
-                                        </div>
-                                    )}
+                                <div className="mt-8 space-y-3">
                                     {alum.profile?.batch && (
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <GraduationCap className="w-4 h-4 text-slate-400" />
-                                            <span>Class of {alum.profile.batch} • {alum.profile.department}</span>
+                                        <div className="flex items-center gap-3 text-sm text-slate-600 font-semibold bg-primary-light/30 p-2 rounded-xl border border-primary/10">
+                                            <GraduationCap className="w-4 h-4 text-primary" />
+                                            <span>Class of {alum.profile.batch}</span>
+                                        </div>
+                                    )}
+                                    {alum.profile?.department && (
+                                        <div className="flex items-center gap-3 text-sm text-slate-500 font-medium ml-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                            <span>{alum.profile.department}</span>
                                         </div>
                                     )}
                                 </div>
 
                                 {alum.profile?.skills && alum.profile.skills.length > 0 && (
-                                    <div className="mt-4 flex flex-wrap gap-1">
+                                    <div className="mt-8 flex flex-wrap gap-2">
                                         {alum.profile.skills.slice(0, 3).map((skill: string) => (
-                                            <Badge key={skill} className="px-2 py-0.5 text-xs bg-slate-100 text-slate-600 border border-slate-200">
+                                            <Badge key={skill} className="px-3 py-1 text-[10px] font-bold bg-white text-slate-600 border border-slate-200 uppercase letter-wider rounded-lg">
                                                 {skill}
                                             </Badge>
                                         ))}
-                                        {alum.profile.skills.length > 3 && (
-                                            <span className="text-xs text-slate-400 px-1">+{alum.profile.skills.length - 3}</span>
-                                        )}
                                     </div>
                                 )}
                             </div>
 
-                            <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
-                                <button
-                                    onClick={() => handleConnect(alum.id)}
-                                    className="flex-1 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all font-semibold"
-                                >
-                                    Connect
-                                </button>
-                                {alum.profile?.linkedin && (
-                                    <a href={alum.profile.linkedin} target="_blank" rel="noreferrer" className="p-2 bg-[#0077b5]/10 text-[#0077b5] rounded-lg hover:bg-[#0077b5]/20 transition-colors">
-                                        <Linkedin className="w-5 h-5" />
-                                    </a>
+                            <div className="p-6 pt-0 flex gap-3">
+                                {alum.connectionStatus === "ACCEPTED" ? (
+                                    <Link
+                                        href={`/student/messages/${alum.id}`}
+                                        className="flex-1 py-3.5 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary-shadow uppercase tracking-widest text-center hover:bg-black transition-all hover:-translate-y-0.5 active:scale-95"
+                                    >
+                                        Message
+                                    </Link>
+                                ) : alum.connectionStatus === "PENDING" ? (
+                                    <button
+                                        disabled
+                                        className="flex-1 py-3.5 bg-slate-100 text-slate-400 rounded-2xl text-xs font-black uppercase tracking-widest border border-slate-200 cursor-not-allowed"
+                                    >
+                                        Request Sent
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleConnect(alum.id)}
+                                        className="flex-1 py-3.5 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary-shadow uppercase tracking-widest hover:bg-black transition-all hover:-translate-y-0.5 active:scale-95"
+                                    >
+                                        Connect
+                                    </button>
                                 )}
-                                {alum.profile?.github && (
-                                    <a href={alum.profile.github} target="_blank" rel="noreferrer" className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
-                                        <Github className="w-5 h-5" />
-                                    </a>
-                                )}
+                                
+                                <div className="flex gap-2">
+                                    {alum.profile?.linkedin && (
+                                        <a href={alum.profile.linkedin} target="_blank" rel="noreferrer" className="w-11 h-11 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-primary-light hover:text-primary transition-all border border-slate-100">
+                                            <Linkedin className="w-5 h-5" />
+                                        </a>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}
