@@ -71,7 +71,7 @@ export function Sidebar({ role }: SidebarProps) {
                         <GraduationCap className="w-6 h-6" />
                     </div>
                     <span className="font-bold text-slate-900 flex items-center gap-1.3">
-                        Alumni&nbsp;<span className="text-primary">Connect</span>
+                        Alumsphere
                     </span>
                 </h1>
             </div>

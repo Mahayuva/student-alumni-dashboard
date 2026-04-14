@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
                         <div className="bg-[#F39C12] p-2.5 rounded-lg">
                             <GraduationCap className="w-8 h-8 text-black" strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']">Alumnium Connect</h2>
+                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']">Alumsphere</h2>
                     </div>
 
                     <h1 className="text-6xl font-bold leading-[1.15] font-['Playfair_Display'] max-w-lg mt-24">
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 <div className="relative z-10 text-sm font-light text-slate-500">
-                    &copy; {new Date().getFullYear()} Alumnium Connect. All rights reserved.
+                    &copy; {new Date().getFullYear()} Alumsphere. All rights reserved.
                 </div>
             </div>
 

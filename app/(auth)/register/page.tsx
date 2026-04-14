@@ -125,7 +125,7 @@ export default function RegisterPage() {
                         <div className="bg-[#F39C12] p-2.5 rounded-lg">
                             <GraduationCap className="w-8 h-8 text-black" strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']">Alumnium Connect</h2>
+                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']">Alumsphere</h2>
                     </div>
 
                     {/* Main Slogan */}
@@ -155,7 +155,7 @@ export default function RegisterPage() {
 
                 {/* Footer Copy */}
                 <div className="relative z-10 text-sm font-light text-slate-500">
-                    &copy; {new Date().getFullYear()} Alumnium Connect. All rights reserved.
+                    &copy; {new Date().getFullYear()} Alumsphere. All rights reserved.
                 </div>
             </div>
 

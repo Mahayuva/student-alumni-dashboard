@@ -42,7 +42,7 @@ export function Chatbot() {
                                 <Bot className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm">Alumni Connect AI</h3>
+                                <h3 className="font-bold text-sm">Alumsphere AI</h3>
                                 <p className="text-[10px] uppercase font-black tracking-widest text-white/70">Expert Career Bot</p>
                             </div>
                         </div>

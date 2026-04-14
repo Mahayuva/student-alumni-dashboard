@@ -73,7 +73,7 @@ export default function LoginPage() {
                         <div className="bg-[#F39C12] p-2.5 rounded-lg shadow-lg shadow-orange-500/20">
                             <BookOpen className="w-8 h-8 text-black" strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']"> Alumnium Connect</h2>
+                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']"> Alumsphere</h2>
                     </div>
 
                     {/* Main Slogan */}
