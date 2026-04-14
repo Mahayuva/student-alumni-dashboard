@@ -23,14 +23,34 @@ export function ThemeCustomizer() {
         setFontFamily(savedFont);
 
         // Apply immediately
-        document.documentElement.setAttribute("data-theme", savedColor);
+        if (savedColor.startsWith('#')) {
+            document.documentElement.setAttribute("data-theme", "custom");
+            document.documentElement.style.setProperty('--primary', savedColor);
+            document.documentElement.style.setProperty('--primary-light', savedColor + '1a');
+            document.documentElement.style.setProperty('--primary-shadow', savedColor + '33');
+        } else {
+            document.documentElement.setAttribute("data-theme", savedColor);
+            document.documentElement.style.removeProperty('--primary');
+            document.documentElement.style.removeProperty('--primary-light');
+            document.documentElement.style.removeProperty('--primary-shadow');
+        }
         document.body.setAttribute("data-font", savedFont);
     }, []);
 
     const handleColorChange = (color: string) => {
         setThemeColor(color);
         localStorage.setItem("theme-color", color);
-        document.documentElement.setAttribute("data-theme", color);
+        if (color.startsWith('#')) {
+            document.documentElement.setAttribute("data-theme", "custom");
+            document.documentElement.style.setProperty('--primary', color);
+            document.documentElement.style.setProperty('--primary-light', color + '1a');
+            document.documentElement.style.setProperty('--primary-shadow', color + '33');
+        } else {
+            document.documentElement.setAttribute("data-theme", color);
+            document.documentElement.style.removeProperty('--primary');
+            document.documentElement.style.removeProperty('--primary-light');
+            document.documentElement.style.removeProperty('--primary-shadow');
+        }
     };
 
     const handleFontChange = (font: string) => {
@@ -53,6 +73,9 @@ export function ThemeCustomizer() {
         { id: "inter", label: "Modern (Inter)", style: "font-sans" },
         { id: "serif", label: "Elegant (Serif)", style: "font-serif" },
         { id: "mono", label: "Technical (Mono)", style: "font-mono" },
+        { id: "roboto", label: "Clean (Roboto)", style: "font-sans" },
+        { id: "poppins", label: "Geometric (Poppins)", style: "font-sans" },
+        { id: "outfit", label: "Contemporary (Outfit)", style: "font-sans" },
     ];
 
     return (
@@ -83,7 +106,7 @@ export function ThemeCustomizer() {
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block">
                                 Accent Color
                             </label>
-                            <div className="grid grid-cols-5 gap-3">
+                            <div className="grid grid-cols-6 gap-2">
                                 {themes.map((t) => (
                                     <button
                                         key={t.id}
@@ -98,6 +121,33 @@ export function ThemeCustomizer() {
                                         {themeColor === t.id && <Check className="w-4 h-4 text-white" />}
                                     </button>
                                 ))}
+                                
+                                {/* Custom Color Picker Box */}
+                                <div 
+                                    className={`relative w-full aspect-square rounded-full flex items-center justify-center transition-all shadow-sm border border-slate-200 overflow-hidden ${
+                                        themeColor.startsWith('#')
+                                            ? "ring-2 ring-offset-2 ring-slate-400 scale-110"
+                                            : "hover:scale-105"
+                                    }`}
+                                    style={{ 
+                                        background: themeColor.startsWith('#') 
+                                            ? themeColor 
+                                            : 'conic-gradient(from 0deg, red, yellow, lime, aqua, blue, magenta, red)'
+                                    }}
+                                    title="Custom Color"
+                                >
+                                    <input 
+                                        type="color" 
+                                        value={themeColor.startsWith('#') ? themeColor : '#2563eb'}
+                                        onChange={(e) => handleColorChange(e.target.value)}
+                                        className="absolute inset-[auto] w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 cursor-pointer z-10"
+                                    />
+                                    {themeColor.startsWith('#') && (
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                                            <Check className="w-4 h-4 text-white drop-shadow-md" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

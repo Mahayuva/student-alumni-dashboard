@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { GraduationCap, ArrowRight, Mail, Lock, Building2 } from "lucide-react";
+import { GraduationCap, ArrowRight, Mail, Lock, Building2, BookOpen, Users } from "lucide-react";
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function LoginPage() {
             const res = await signIn("credentials", {
                 email,
                 password,
-                role: loginRole, // Pass the selected portal role
+                role: loginRole,
                 redirect: false,
             });
 
@@ -35,11 +35,8 @@ export default function LoginPage() {
                 return;
             }
 
-            // Redirect based on the actual authenticated user's role
-            // We'll use a small timeout to let the session propagate or use a separate fetch
             const sessionRes = await fetch("/api/auth/session");
             const session = await sessionRes.json();
-            
             const userRole = session?.user?.role;
 
             if (userRole === "ADMIN") {
@@ -57,126 +54,184 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex bg-white dark:bg-slate-950">
+        <div className="min-h-screen flex font-['Outfit']">
             {/* Left Side - Hero Section */}
-            <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white p-12 flex-col justify-between overflow-hidden">
-                {/* Background Shapes */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -ml-20 -mb-20"></div>
+            <div className="hidden lg:flex lg:w-1/2 relative bg-[#0B1221] text-white p-16 flex-col justify-between overflow-hidden">
+                {/* Background Image Overlay */}
+                <div 
+                    className="absolute inset-0 opacity-40 mix-blend-overlay"
+                    style={{
+                        backgroundImage: `url('https://images.unsplash.com/photo-1523050853051-f050540c4a1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1500&q=80')`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    }}
+                />
+                
+                <div className="relative z-10 w-full space-y-12">
+                    {/* Logo Section */}
+                    <div className="flex items-center gap-4">
+                        <div className="bg-[#F39C12] p-2.5 rounded-lg shadow-lg shadow-orange-500/20">
+                            <BookOpen className="w-8 h-8 text-black" strokeWidth={2.5} />
+                        </div>
+                        <h2 className="text-3xl font-bold tracking-tight font-['Playfair_Display']"> Alumnium Connect</h2>
+                    </div>
 
-                {/* Header */}
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md w-fit px-4 py-2 rounded-xl border border-white/20">
-                        <GraduationCap className="w-6 h-6" />
-                        <span className="font-semibold tracking-wide">Alumni Connect</span>
+                    {/* Main Slogan */}
+                    <h1 className="text-6xl font-bold leading-[1.15] font-['Playfair_Display'] max-w-lg mt-24">
+                        Connecting our past, present, and future.
+                    </h1>
+
+                    {/* Quote Section */}
+                    <div className="border-l-4 border-[#F39C12] pl-6 py-2 space-y-3 mt-12 max-w-md">
+                        <p className="text-xl italic text-slate-300 font-light leading-relaxed">
+                            "Education is not the filling of a pail, but the lighting of a fire."
+                        </p>
+                        {/* <p className="text-sm tracking-widest text-[#F39C12] font-semibold uppercase">
+                            — William Butler Yeats
+                        </p> */}
                     </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="relative z-10 max-w-lg">
-                    <h1 className="text-5xl font-bold mb-6 leading-tight">
-                        Welcome back to <br />
-                        <span className="text-purple-200">your community</span>
-                    </h1>
-                    <p className="text-lg text-purple-100 leading-relaxed mb-8">
-                        Stay connected with your alma mater. Access exclusive events, mentorship programs,
-                        and career opportunities tailored just for you.
-                    </p>
-                </div>
-
-                {/* Footer */}
-                <div className="relative z-10 text-sm text-purple-200">
-                    © {new Date().getFullYear()} Alumni Connect. All rights reserved.
+                {/* Footer Copy */}
+                <div className="relative z-10 text-sm font-light text-slate-500">
+                    &copy; {new Date().getFullYear()} Alumunium Connect.
                 </div>
             </div>
 
             {/* Right Side - Form Section */}
-            <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12 overflow-y-auto">
-                <div className="w-full max-w-md space-y-8">
-                    <div className="text-center lg:text-left">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Welcome Back</h2>
-                        <p className="mt-2 text-slate-600 dark:text-slate-400">
-                            Please sign in to your account
+            <div className="flex-1 flex flex-col justify-center items-center bg-[#F8FAFC] p-8 lg:p-20 overflow-y-auto">
+                <div className="w-full max-w-[440px] space-y-10">
+                    <div className="space-y-3">
+                        <h2 className="text-[40px] font-bold text-[#0B1221] font-['Playfair_Display']">Welcome back</h2>
+                        <p className="text-[#64748B] text-lg font-light">
+                            Please enter your details to access your portal.
                         </p>
                     </div>
 
                     {/* Role Tabs */}
-                    <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
-                        {(["student", "alumni", "admin"] as const).map((r) => (
-                            <button
-                                key={r}
-                                type="button"
-                                onClick={() => setLoginRole(r)}
-                                className={`flex-1 py-2 text-sm font-medium rounded-lg capitalize transition-all ${loginRole === r
-                                    ? "bg-white dark:bg-slate-800 text-indigo-600 shadow-sm"
-                                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
-                                    }`}
-                            >
-                                {r === "admin" ? "Institution" : r}
-                            </button>
-                        ))}
+                    <div className="flex p-1.5 bg-[#E2E8F0] rounded-xl font-medium">
+                        <button
+                            type="button"
+                            onClick={() => setLoginRole("student")}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm rounded-lg transition-all duration-300 ${
+                                loginRole === "student"
+                                    ? "bg-white text-[#0B1221] shadow-sm ring-1 ring-black/5"
+                                    : "text-[#64748B] hover:text-[#0B1221]"
+                            }`}
+                        >
+                            <BookOpen className={`w-4 h-4 ${loginRole === "student" ? "text-[#F39C12]" : ""}`} />
+                            Student
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLoginRole("alumni")}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm rounded-lg transition-all duration-300 ${
+                                loginRole === "alumni"
+                                    ? "bg-white text-[#0B1221] shadow-sm ring-1 ring-black/5"
+                                    : "text-[#64748B] hover:text-[#0B1221]"
+                            }`}
+                        >
+                            <Users className="w-4 h-4" />
+                            Alumni
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLoginRole("admin")}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm rounded-lg transition-all duration-300 ${
+                                loginRole === "admin"
+                                    ? "bg-white text-[#0B1221] shadow-sm ring-1 ring-black/5"
+                                    : "text-[#64748B] hover:text-[#0B1221]"
+                            }`}
+                        >
+                            <Building2 className="w-4 h-4" />
+                            Institution
+                        </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                    <form onSubmit={handleSubmit} className="space-y-7">
+                        <div className="space-y-2.5">
+                            <label className="text-sm font-semibold text-[#334155] ml-1">University Email</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#0B1221]">
+                                    <Mail className="w-5 h-5 text-[#94A3B8]" />
+                                </div>
                                 <input
                                     type="email"
                                     name="email"
                                     required
-                                    placeholder="you@college.edu"
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="Enter your email"
+                                    className="w-full pl-12 pr-5 py-4 bg-white rounded-xl border border-[#E2E8F0] text-[#0B1221] placeholder:text-[#94A3B8] focus:border-[#0B1221] focus:ring-4 focus:ring-[#0B1221]/5 outline-none transition-all"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-                                <Link href="/forgot-password" className="text-sm text-indigo-600 font-medium hover:underline">
-                                    Forgot password?
-                                </Link>
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                        <div className="space-y-2.5">
+                            <label className="text-sm font-semibold text-[#334155] ml-1">Password</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-[#0B1221]">
+                                    <Lock className="w-5 h-5 text-[#94A3B8]" />
+                                </div>
                                 <input
                                     type="password"
                                     name="password"
                                     required
                                     placeholder="••••••••"
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                                    className="w-full pl-12 pr-5 py-4 bg-white rounded-xl border border-[#E2E8F0] text-[#0B1221] placeholder:text-[#94A3B8] focus:border-[#0B1221] focus:ring-4 focus:ring-[#0B1221]/5 outline-none transition-all"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <input type="checkbox" id="remember" className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                            <label htmlFor="remember" className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">Remember me for 30 days</label>
+                        <div className="flex items-center justify-between px-1">
+                            <div className="flex items-center gap-3 group cursor-pointer">
+                                <div className="relative flex items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        id="remember" 
+                                        className="peer appearance-none w-5 h-5 border-2 border-[#E2E8F0] rounded-md bg-white checked:bg-[#F39C12] checked:border-[#F39C12] transition-all cursor-pointer" 
+                                    />
+                                    <div className="absolute pointer-events-none opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white">
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <label htmlFor="remember" className="text-sm text-[#64748B] font-medium cursor-pointer select-none group-hover:text-[#334155] transition-colors">
+                                    Remember me
+                                </label>
+                            </div>
+                            <Link href="/forgot-password" className="text-sm font-bold text-[#F39C12] hover:text-[#D68910] transition-colors">
+                                Forgot password?
+                            </Link>
                         </div>
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-4.5 bg-[#0B1221] hover:bg-[#1E293B] text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70 shadow-xl shadow-slate-900/10 group"
                         >
                             {isLoading ? (
-                                "Signing in..."
+                                <span className="flex items-center gap-2">
+                                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Signing in...
+                                </span>
                             ) : (
                                 <>
-                                    Sign In <ArrowRight className="w-5 h-5" />
+                                    <span>Sign in as {loginRole.charAt(0).toUpperCase() + loginRole.slice(1)}</span>
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </button>
                     </form>
 
-                    <p className="text-center text-slate-500 dark:text-slate-400 text-sm">
-                        Don't have an account?{" "}
-                        <Link href="/register" className="text-indigo-600 font-semibold hover:underline">
-                            Create account
+                    <div className="text-center pt-4">
+                        <span className="text-[#64748B] font-medium">Don't have an account? </span>
+                        <Link href="/register" className="text-[#F39C12] font-bold hover:underline transition-all">
+                            Apply for access
                         </Link>
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>
