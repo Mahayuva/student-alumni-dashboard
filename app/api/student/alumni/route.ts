@@ -14,11 +14,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const batch = searchParams.get("batch");
     const search = searchParams.get("search");
+    const requestedRole = searchParams.get("role") || "ALUMNI";
+
+    // Only Admin and Institute can see non-ALUMNI roles
+    const isAdminOrInstitute = session.user.role === "ADMIN" || session.user.role === "INSTITUTE";
+    const finalRole = (isAdminOrInstitute && (requestedRole === "STUDENT" || requestedRole === "ALUMNI")) ? requestedRole : "ALUMNI";
 
     try {
         const whereClause: Prisma.UserWhereInput = {
-            role: "ALUMNI",
-            // isVerified: true, // Uncomment if verification workflow is enforced
+            role: finalRole as any,
         };
 
         if (batch && batch !== "all") {
@@ -82,7 +86,7 @@ export async function GET(req: Request) {
         const batches = await prisma.profile.findMany({
             where: {
                 batch: { not: null },
-                user: { role: "ALUMNI" }
+                user: { role: finalRole as any }
             },
             select: { batch: true },
             distinct: ['batch'],

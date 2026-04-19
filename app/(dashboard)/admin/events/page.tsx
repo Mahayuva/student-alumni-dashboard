@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Search, Check, X } from "lucide-react";
+import { Calendar, Search, Check, X, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import toast from "react-hot-toast";
 
@@ -47,6 +47,26 @@ export default function EventsManagementPage() {
             }
         } catch (error) {
             toast.error("Update failed", { id: loadingToast });
+        }
+    };
+
+    const handleDeleteEvent = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this event? This will also remove all attendee registrations.")) return;
+
+        const loadingToast = toast.loading("Deleting event...");
+        try {
+            const res = await fetch(`/api/admin/events?id=${id}`, {
+                method: "DELETE"
+            });
+
+            if (res.ok) {
+                toast.success("Event deleted successfully", { id: loadingToast });
+                setEvents(events.filter(ev => ev.id !== id));
+            } else {
+                toast.error("Delete failed", { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error("Delete failed", { id: loadingToast });
         }
     };
 
@@ -136,6 +156,14 @@ export default function EventsManagementPage() {
                                                     title={event.isApproved ? "Reject Event" : "Approve Event"}
                                                 >
                                                     {event.isApproved ? <X className="w-5 h-5" /> : <Check className="w-5 h-5" />}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors bg-white border border-slate-200"
+                                                    title="Delete Event"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </td>

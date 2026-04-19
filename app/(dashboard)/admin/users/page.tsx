@@ -1,19 +1,22 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { Check, MoreHorizontal, Search, UserCog, UserMinus, ShieldAlert } from "lucide-react";
+import { Check, MoreHorizontal, Search, UserCog, UserMinus, ShieldAlert, Trash2, Key, MessageSquare } from "lucide-react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 type User = {
     id: string;
     name: string;
     email: string;
-    role: "STUDENT" | "ALUMNI" | "ADMIN";
+    role: "STUDENT" | "ALUMNI" | "ADMIN" | "INSTITUTE";
     isVerified: boolean;
 };
 
 export default function UserManagementPage() {
+    const { data: session } = useSession();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -55,6 +58,25 @@ export default function UserManagementPage() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+
+        try {
+            const res = await fetch(`/api/admin/users?id=${id}`, {
+                method: "DELETE",
+            });
+
+            if (res.ok) {
+                toast.success("User deleted successfully");
+                fetchUsers();
+            } else {
+                toast.error("Failed to delete user");
+            }
+        } catch (e) {
+            toast.error("An error occurred");
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         (u.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
         (u.email?.toLowerCase() || "").includes(search.toLowerCase())
@@ -90,21 +112,28 @@ export default function UserManagementPage() {
                                 <th className="p-4 font-medium">Role</th>
                                 <th className="p-4 font-medium">Email</th>
                                 <th className="p-4 font-medium">Status</th>
-                                <th className="p-4 font-medium">Actions</th>
+                                <th className="p-4 font-medium text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-slate-900">
                             {filteredUsers.map(user => (
-                                <tr key={user.id} className="hover:bg-slate-50:bg-slate-800/20 transition-colors">
+                                <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-4 font-medium">{user.name || "Unknown"}</td>
                                     <td className="p-4">
-                                        <Badge className={
-                                            user.role === "ADMIN" ? "bg-purple-100 text-purple-700 hover:bg-purple-200 border-0" :
-                                                user.role === "ALUMNI" ? "bg-orange-100 text-orange-700 hover:bg-orange-200 border-0" :
-                                                    "bg-blue-100 text-blue-700 hover:bg-blue-200 border-0"
-                                        }>
-                                            {user.role}
-                                        </Badge>
+                                        <select
+                                            value={user.role}
+                                            onChange={(e) => handleAction(user.id, "updateRole", e.target.value)}
+                                            className={`text-[10px] font-bold uppercase rounded-full px-2 py-1 outline-none border-0 cursor-pointer ${user.role === "ADMIN" ? "bg-purple-100 text-purple-700" :
+                                                    user.role === "ALUMNI" ? "bg-orange-100 text-orange-700" :
+                                                    user.role === "INSTITUTE" ? "bg-teal-100 text-teal-700" :
+                                                        "bg-blue-100 text-blue-700"
+                                                }`}
+                                        >
+                                            <option value="STUDENT">Student</option>
+                                            <option value="ALUMNI">Alumni</option>
+                                            <option value="ADMIN">Admin</option>
+                                            <option value="INSTITUTE">Institute</option>
+                                        </select>
                                     </td>
                                     <td className="p-4 text-slate-500">{user.email}</td>
                                     <td className="p-4">
@@ -116,25 +145,43 @@ export default function UserManagementPage() {
                                         </Badge>
                                     </td>
                                     <td className="p-4">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Link
+                                                href={`/${(session as any)?.user?.role?.toLowerCase()}/messages/${user.id}`}
+                                                className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                                title="Send Message"
+                                            >
+                                                <MessageSquare className="w-4 h-4" />
+                                            </Link>
                                             {!user.isVerified && (
                                                 <button
                                                     onClick={() => handleAction(user.id, "verify")}
-                                                    className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100:bg-green-900/40 rounded-lg transition-colors"
+                                                    className="p-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
                                                     title="Approve User"
                                                 >
                                                     <Check className="w-4 h-4" />
                                                 </button>
                                             )}
-                                            {user.role !== "ADMIN" && (
-                                                <button
-                                                    onClick={() => handleAction(user.id, "updateRole", "ADMIN")}
-                                                    className="p-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100:bg-purple-900/40 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
-                                                    title="Promote to Admin"
-                                                >
-                                                    <UserCog className="w-4 h-4" />
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm("Reset password for this user? The new password will be 'Welcome@123'.")) {
+                                                        handleAction(user.id, "resetPassword");
+                                                    }
+                                                }}
+                                                className="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors"
+                                                title="Reset Password"
+                                            >
+                                                <Key className="w-4 h-4" />
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleDelete(user.id)}
+                                                className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                                title="Delete User"
+                                                disabled={user.id === (session as any)?.user?.id}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>

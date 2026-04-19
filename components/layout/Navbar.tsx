@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { Bell, Search, MessageSquare, Calendar, Briefcase, User as UserIcon } from "lucide-react";
 import { ThemeCustomizer } from "@/components/features/shared/ThemeCustomizer";
 import { useSession } from "next-auth/react";
@@ -29,21 +30,106 @@ export function Navbar() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const [conversations, setConversations] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loadingMessages, setLoadingMessages] = useState(false);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+    const fetchConversations = async () => {
+        setLoadingMessages(true);
+        try {
+            const res = await fetch("/api/messages/conversations");
+            if (res.ok) {
+                const data = await res.json();
+                setConversations(data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingMessages(false);
+        }
+    };
+
+    const fetchNotifications = async () => {
+        setLoadingNotifications(true);
+        try {
+            const res = await fetch("/api/notifications");
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingNotifications(false);
+        }
+    };
+
+    useEffect(() => {
+        if (showMessages) {
+            fetchConversations();
+        }
+    }, [showMessages]);
+
+    useEffect(() => {
+        if (showNotifications) {
+            fetchNotifications();
+        }
+    }, [showNotifications]);
+
+    useEffect(() => {
+        if (session) {
+            fetchNotifications();
+            const interval = setInterval(() => {
+                fetchNotifications();
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [session]);
+
+    const markAllRead = async () => {
+        try {
+            const res = await fetch("/api/notifications", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ readAll: true })
+            });
+            if (res.ok) {
+                setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const markAsRead = async (id: string) => {
+        try {
+            const res = await fetch("/api/notifications", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id })
+            });
+            if (res.ok) {
+                setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Calculate unread status with defined state
+    const globalHasUnread = (notifications || []).some(n => !n.isRead);
+
     // Get initials from user name
     const nameStr = session?.user?.name || "User";
     const initials = nameStr.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
 
-    const mockMessages = [
-        { id: 1, sender: "Sarah Jenkins", role: "Alumni • Tech Lead", text: "Are you available for a mock interview this Friday? I can help you prepare for the Google round.", time: "2h ago", unread: true, avatar: "SJ" },
-        { id: 2, sender: "Dr. Robert Smith", role: "Professor", text: "Your project abstract looks great. Proceed with the implementation phase.", time: "5h ago", unread: true, avatar: "RS" },
-        { id: 3, sender: "Emily Chen", role: "Student", text: "Thanks for sharing the resources for the web dev course! Highly appreciated.", time: "1d ago", unread: false, avatar: "EC" },
-    ];
-
-    const mockNotifications = [
-        { id: 1, title: "Mentorship Request Accepted", desc: "Sarah Jenkins accepted your request.", time: "10m ago", icon: UserIcon, color: "text-blue-500", bg: "bg-blue-100/50 border-blue-200" },
-        { id: 2, title: "Upcoming Event", desc: "Annual Alumni Meetup starts in 2 days. Don't forget to RSVP.", time: "2h ago", icon: Calendar, color: "text-primary", bg: "bg-primary-light border-primary/20" },
-        { id: 3, title: "New Job Posting", desc: "Google posted a Junior Developer role matching your skills.", time: "5h ago", icon: Briefcase, color: "text-emerald-500", bg: "bg-emerald-100/50 border-emerald-200" },
-    ];
+    const getNotificationIcon = (title: string) => {
+        if (title.toLowerCase().includes("job")) return { icon: Briefcase, color: "text-emerald-500", bg: "bg-emerald-100/50 border-emerald-200" };
+        if (title.toLowerCase().includes("event")) return { icon: Calendar, color: "text-primary", bg: "bg-primary-light border-primary/20" };
+        if (title.toLowerCase().includes("user")) return { icon: UserIcon, color: "text-blue-500", bg: "bg-blue-100/50 border-blue-200" };
+        return { icon: Bell, color: "text-slate-500", bg: "bg-slate-100 border-slate-200" };
+    };
 
     return (
         <header className="h-24 bg-transparent sticky top-0 z-20 px-12 flex items-center justify-between">
@@ -69,7 +155,7 @@ export function Navbar() {
                             className={`p-2 transition-all relative group ${showMessages ? "text-primary" : "text-slate-500 hover:text-slate-900"}`}
                         >
                             <MessageSquare className="w-5 h-5 opacity-70 group-hover:opacity-100" />
-                            {mockMessages.some(m => m.unread) && (
+                            {(conversations || []).some(c => c.unread) && (
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
                             )}
                         </button>
@@ -81,30 +167,48 @@ export function Navbar() {
                                     <button className="text-xs text-primary font-semibold hover:underline">Mark all read</button>
                                 </div>
                                 <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                                    {mockMessages.map(msg => (
-                                        <div key={msg.id} className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3 ${msg.unread ? "bg-blue-50/30" : ""}`}>
-                                            <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-sm shrink-0 shadow-sm border border-primary/10">
-                                                {msg.avatar}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-0.5">
-                                                    <span className={`text-sm truncate pr-2 ${msg.unread ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>{msg.sender}</span>
-                                                    <span className="text-xs text-slate-400 whitespace-nowrap">{msg.time}</span>
+                                    {loadingMessages ? (
+                                        <div className="p-10 text-center text-xs text-slate-400 font-bold animate-pulse">Checking Data...</div>
+                                    ) : conversations.length === 0 ? (
+                                        <div className="p-10 text-center text-sm text-slate-400 italic">No messages yet.</div>
+                                    ) : (
+                                        conversations.map(conv => (
+                                            <Link 
+                                                key={conv.id} 
+                                                href={`/${session?.user?.role?.toLowerCase()}/messages/${conv.id}`}
+                                                onClick={() => setShowMessages(false)}
+                                                className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-3 ${conv.unread ? "bg-blue-50/30" : ""}`}
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-sm shrink-0 shadow-sm border border-primary/10 overflow-hidden">
+                                                    {conv.image ? <img src={conv.image} className="w-full h-full object-cover" /> : conv.name?.charAt(0)}
                                                 </div>
-                                                <div className="text-[10px] uppercase tracking-wider font-semibold text-primary/80 mb-1">{msg.role}</div>
-                                                <p className={`text-xs line-clamp-2 leading-relaxed ${msg.unread ? "text-slate-700 font-medium" : "text-slate-500"}`}>
-                                                    {msg.text}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-0.5">
+                                                        <span className={`text-sm truncate pr-2 ${conv.unread ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>{conv.name}</span>
+                                                        <span className="text-xs text-slate-400 whitespace-nowrap">
+                                                            {new Date(conv.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-primary/80 mb-1">{conv.role}</div>
+                                                    <p className={`text-xs line-clamp-1 leading-relaxed ${conv.unread ? "text-slate-700 font-medium" : "text-slate-500"}`}>
+                                                        {conv.lastMessage}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        ))
+                                    )}
                                 </div>
-                                <a href="#" className="block px-4 py-3 text-center text-sm text-primary font-bold hover:bg-primary-light/50 transition-colors border-t border-slate-50">
+                                <Link 
+                                    href={`/${session?.user?.role?.toLowerCase()}/messages`} 
+                                    className="block px-4 py-3 text-center text-sm text-primary font-bold hover:bg-primary-light/50 transition-colors border-t border-slate-50"
+                                    onClick={() => setShowMessages(false)}
+                                >
                                     Open Messenger
-                                </a>
+                                </Link>
                             </div>
                         )}
                     </div>
+
 
                     {/* Notifications Dropdown */}
                     <div className="relative" ref={notifsRef}>
@@ -113,36 +217,56 @@ export function Navbar() {
                             className={`p-2 transition-all relative group ${showNotifications ? "text-primary" : "text-slate-500 hover:text-slate-900"}`}
                         >
                             <Bell className="w-5 h-5 opacity-70 group-hover:opacity-100" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+                            {globalHasUnread && (
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white"></span>
+                            )}
                         </button>
 
                         {showNotifications && (
                             <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50 bg-slate-50/50">
                                     <h3 className="font-bold text-slate-800">Notifications</h3>
-                                    <button className="text-xs text-slate-500 hover:text-slate-800 font-medium transition-colors">Settings</button>
+                                    {globalHasUnread && (
+                                        <button 
+                                            onClick={markAllRead}
+                                            className="text-xs text-primary hover:underline font-medium transition-colors"
+                                        >
+                                            Mark all read
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                                    {mockNotifications.map(notif => (
-                                        <div key={notif.id} className="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-4">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${notif.bg} ${notif.color}`}>
-                                                <notif.icon className="w-4 h-4" />
-                                            </div>
-                                            <div className="flex-1 min-w-0 pt-0.5">
-                                                <div className="flex items-start justify-between gap-2 mb-1">
-                                                    <span className="text-sm font-semibold text-slate-900 leading-tight">{notif.title}</span>
+                                    {notifications.length === 0 ? (
+                                        <div className="p-10 text-center text-sm text-slate-400 italic">No notifications yet.</div>
+                                    ) : (
+                                        notifications.map(notif => {
+                                            const { icon: NotifIcon, color, bg } = getNotificationIcon(notif.title);
+                                            return (
+                                                <div 
+                                                    key={notif.id} 
+                                                    onClick={() => { markAsRead(notif.id); if(notif.link) window.location.href = notif.link; }}
+                                                    className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer flex gap-4 ${!notif.isRead ? "bg-primary/5" : ""}`}
+                                                >
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${bg} ${color}`}>
+                                                        <NotifIcon className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 pt-0.5">
+                                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                                            <span className={`text-sm leading-tight ${!notif.isRead ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>{notif.title}</span>
+                                                        </div>
+                                                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-1.5">
+                                                            {notif.message}
+                                                        </p>
+                                                        <span className="text-[10px] font-medium text-slate-400">{new Date(notif.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-1.5">
-                                                    {notif.desc}
-                                                </p>
-                                                <span className="text-[10px] font-medium text-slate-400">{notif.time}</span>
-                                            </div>
-                                        </div>
-                                    ))}
+                                            );
+                                        })
+                                    )}
                                 </div>
-                                <a href="#" className="block px-4 py-3 text-center text-sm text-primary font-bold hover:bg-primary-light/50 transition-colors border-t border-slate-50">
-                                    View all notifications
-                                </a>
+                                <div className="px-4 py-3 text-center text-sm text-primary font-bold hover:bg-primary-light/50 transition-colors border-t border-slate-50">
+                                    Recent Updates
+                                </div>
                             </div>
                         )}
                     </div>

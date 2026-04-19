@@ -54,6 +54,30 @@ export async function POST(req: Request) {
             },
         });
 
+        // Notify Admins
+        const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
+        await prisma.notification.createMany({
+            data: admins.map(admin => ({
+                userId: admin.id,
+                title: "New Job Posted",
+                message: `${session.user.name} posted a new opportunity: ${job.title} at ${job.company}`,
+                link: "/admin/jobs"
+            }))
+        });
+
+        // Notify Students (if active)
+        if (job.isActive) {
+            const students = await prisma.user.findMany({ where: { role: "STUDENT" } });
+            await prisma.notification.createMany({
+                data: students.map(student => ({
+                    userId: student.id,
+                    title: "New Job Opportunity",
+                    message: `${job.title} at ${job.company} is now open for applications.`,
+                    link: "/student/jobs"
+                }))
+            });
+        }
+
         return NextResponse.json(job);
     } catch (error) {
         if (error instanceof z.ZodError) {

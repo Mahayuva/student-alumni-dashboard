@@ -5,8 +5,9 @@ import { prisma } from "@/lib/db";
 
 export async function GET(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -14,16 +15,16 @@ export async function GET(
     }
 
     try {
-        // Fetch conversation between session.user.id and params.id
+        // Fetch conversation between session.user.id and id
         const messages = await prisma.message.findMany({
             where: {
                 OR: [
                     {
                         senderId: session.user.id,
-                        receiverId: params.id,
+                        receiverId: id,
                     },
                     {
-                        senderId: params.id,
+                        senderId: id,
                         receiverId: session.user.id,
                     },
                 ],
@@ -41,8 +42,9 @@ export async function GET(
 
 export async function POST(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -61,7 +63,7 @@ export async function POST(
             data: {
                 content,
                 senderId: session.user.id,
-                receiverId: params.id,
+                receiverId: id,
             },
         });
 

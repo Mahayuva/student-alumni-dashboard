@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Search, Filter, MapPin, Building, GraduationCap, Github, Linkedin, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { toast } from "react-hot-toast";
@@ -12,33 +13,37 @@ export function AlumniDirectory() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBatch, setSelectedBatch] = useState("all");
+    const [activeTab, setActiveTab] = useState<"ALUMNI" | "STUDENT">("ALUMNI");
+
+    const { data: session } = useSession();
+    const userRole = session?.user?.role as string | undefined;
+    const canDirectMessage = userRole === "INSTITUTE" || userRole === "ADMIN";
 
     useEffect(() => {
         fetchAlumni();
-    }, [selectedBatch]); // Re-fetch when batch filter changes
+    }, [selectedBatch, activeTab]); 
 
     const fetchAlumni = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (selectedBatch !== "all") params.append("batch", selectedBatch);
-            // Search is handled client-side for smoother UX or can be added to params debounce
+            params.append("role", activeTab);
 
             const res = await fetch(`/api/student/alumni?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
-                setAlumni(data.alumni);
+                setAlumni(data.alumni || []);
                 if (data.batches) setBatches(data.batches);
             }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to load alumni directory.");
+            toast.error("Failed to load community directory.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Client-side search filtering
     const filteredAlumni = alumni.filter(a => {
         const query = searchQuery.toLowerCase();
         return (
@@ -59,7 +64,7 @@ export function AlumniDirectory() {
 
             if (res.ok) {
                 toast.success("Mentorship request sent!");
-                fetchAlumni(); // Refresh to show pending status
+                fetchAlumni(); 
             } else {
                 toast.error("Failed to send request.");
             }
@@ -69,7 +74,6 @@ export function AlumniDirectory() {
     };
 
     const alumniWithStatus = filteredAlumni.map(alum => {
-        // alum.mentionshipReceived is the mentorship the student sent to this alumni
         const request = alum.mentorshipReceived?.[0]; 
         return {
             ...alum,
@@ -79,6 +83,32 @@ export function AlumniDirectory() {
 
     return (
         <div className="space-y-6">
+            {/* Role Tab Switcher (Admin/Institute only) */}
+            {canDirectMessage && (
+                <div className="flex gap-2 p-1.5 bg-slate-100/50 rounded-2xl w-fit border border-slate-200 shadow-sm backdrop-blur-sm">
+                    <button
+                        onClick={() => setActiveTab("ALUMNI")}
+                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                            activeTab === "ALUMNI" 
+                                ? "bg-white text-primary shadow-md ring-1 ring-black/5" 
+                                : "text-slate-500 hover:text-slate-700"
+                        }`}
+                    >
+                        Alumni
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("STUDENT")}
+                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                            activeTab === "STUDENT" 
+                                ? "bg-white text-primary shadow-md ring-1 ring-black/5" 
+                                : "text-slate-500 hover:text-slate-700"
+                        }`}
+                    >
+                        Students
+                    </button>
+                </div>
+            )}
+
             {/* Search and Filter Bar */}
             <div className="bg-white/70 backdrop-blur-md p-6 rounded-3xl shadow-xl shadow-blue-50/50 border border-white flex flex-col md:flex-row gap-6">
                 <div className="relative flex-1 group">
@@ -111,7 +141,7 @@ export function AlumniDirectory() {
 
             {/* Results Grid */}
             {loading ? (
-                <div className="text-center py-12 text-slate-500">Loading alumni directory...</div>
+                <div className="text-center py-12 text-slate-500">Loading directory...</div>
             ) : filteredAlumni.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {alumniWithStatus.map((alum) => (
@@ -123,7 +153,7 @@ export function AlumniDirectory() {
                                             <img src={alum.image} alt={alum.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-primary-light text-primary font-black text-3xl">
-                                                {alum.name?.charAt(0) || "A"}
+                                                {alum.name?.charAt(0) || "U"}
                                             </div>
                                         )}
                                     </div>
@@ -132,7 +162,7 @@ export function AlumniDirectory() {
                                             {alum.name}
                                         </h3>
                                         <p className="text-slate-500 text-sm font-bold tracking-tight">
-                                            {alum.profile?.currentRole || "Alumni"}
+                                            {alum.profile?.currentRole || (activeTab === "STUDENT" ? "Student" : "Alumni")}
                                         </p>
                                         {alum.profile?.company && (
                                             <p className="text-slate-400 text-[10px] uppercase font-black mt-1">at {alum.profile.company}</p>
@@ -144,7 +174,7 @@ export function AlumniDirectory() {
                                     {alum.profile?.batch && (
                                         <div className="flex items-center gap-3 text-sm text-slate-600 font-semibold bg-primary-light/30 p-2 rounded-xl border border-primary/10">
                                             <GraduationCap className="w-4 h-4 text-primary" />
-                                            <span>Class of {alum.profile.batch}</span>
+                                            <span>{activeTab === "STUDENT" ? "Batch of" : "Class of"} {alum.profile.batch}</span>
                                         </div>
                                     )}
                                     {alum.profile?.department && (
@@ -167,9 +197,9 @@ export function AlumniDirectory() {
                             </div>
 
                             <div className="p-6 pt-0 flex gap-3">
-                                {alum.connectionStatus === "ACCEPTED" ? (
+                                {(alum.connectionStatus === "ACCEPTED" || canDirectMessage) ? (
                                     <Link
-                                        href={`/student/messages/${alum.id}`}
+                                        href={`/${userRole?.toLowerCase()}/messages/${alum.id}`}
                                         className="flex-1 py-3.5 bg-primary text-white rounded-2xl text-xs font-black shadow-lg shadow-primary-shadow uppercase tracking-widest text-center hover:bg-black transition-all hover:-translate-y-0.5 active:scale-95"
                                     >
                                         Message
@@ -204,7 +234,7 @@ export function AlumniDirectory() {
             ) : (
                 <div className="text-center py-16 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                     <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-bold text-slate-900">No Alumni Found</h3>
+                    <h3 className="text-lg font-bold text-slate-900">No Members Found</h3>
                     <p className="text-slate-500">Try adjusting your filters or search query.</p>
                 </div>
             )}

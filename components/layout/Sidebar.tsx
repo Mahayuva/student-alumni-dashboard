@@ -22,6 +22,7 @@ import { signOut, useSession } from "next-auth/react";
 const sidebarItems = {
     student: [
         { icon: LayoutDashboard, label: "Dashboard", href: "/student/dashboard" },
+        { icon: MessageSquare, label: "My Messages", href: "/student/messages" },
         { icon: Briefcase, label: "Jobs & Internships", href: "/student/jobs" },
         { icon: Calendar, label: "Events", href: "/student/events" },
         { icon: GraduationCap, label: "Skill Analyser", href: "/student/skills" },
@@ -29,11 +30,11 @@ const sidebarItems = {
         { icon: MapPin, label: "AlumFinder", href: "/student/map" },
         { icon: User, label: "Batch-wise Alumni", href: "/student/alumni" },
         { icon: MessageSquare, label: "Success Stories", href: "/student/stories" },
-        { icon: LineChart, label: "Career Analytics", href: "/student/analytics" },
         { icon: Settings, label: "Settings", href: "/settings" },
     ],
     alumni: [
         { icon: LayoutDashboard, label: "Dashboard", href: "/alumni/dashboard" },
+        { icon: MessageSquare, label: "My Messages", href: "/alumni/messages" },
         { icon: Briefcase, label: "Post Jobs", href: "/alumni/jobs/create" },
         { icon: Calendar, label: "Post Events", href: "/alumni/events/create" },
         { icon: Users, label: "Mentorship Requests", href: "/alumni/mentorship" },
@@ -44,18 +45,27 @@ const sidebarItems = {
     ],
     admin: [
         { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
+        // { icon: MessageSquare, label: "My Messages", href: "/admin/messages" },
         { icon: Users, label: "User Management", href: "/admin/users" },
         { icon: Briefcase, label: "Jobs Moderation", href: "/admin/jobs" },
         { icon: Calendar, label: "Events Management", href: "/admin/events" },
         { icon: MessageSquare, label: "Stories Approval", href: "/admin/stories" },
         { icon: Users, label: "Mentorship Monitor", href: "/admin/mentorship" },
-        { icon: MapPin, label: "AlumFinder Control", href: "/admin/map" },
+        { icon: MapPin, label: "Community Directory", href: "/admin/alumni" },
+        { icon: Settings, label: "Settings", href: "/settings" },
+    ],
+    institute: [
+        { icon: LayoutDashboard, label: "Dashboard", href: "/institute/dashboard" },
+        { icon: MessageSquare, label: "My Messages", href: "/institute/messages" },
+        { icon: Users, label: "User Management", href: "/institute/users" },
+        { icon: User, label: "Alumni Directory", href: "/institute/alumni" },
+        { icon: Briefcase, label: "Job Moderation", href: "/institute/jobs" },
         { icon: Settings, label: "Settings", href: "/settings" },
     ],
 };
 
 interface SidebarProps {
-    role: "student" | "alumni" | "admin";
+    role: "student" | "alumni" | "admin" | "institute";
 }
 
 export function Sidebar({ role }: SidebarProps) {

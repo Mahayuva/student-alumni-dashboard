@@ -48,6 +48,30 @@ export async function POST(req: Request) {
             },
         });
 
+        // Notify Admins
+        const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
+        await prisma.notification.createMany({
+            data: admins.map(admin => ({
+                userId: admin.id,
+                title: "New Event Posted",
+                message: `${session.user.name} has posted a new event: ${event.title}`,
+                link: "/admin/events"
+            }))
+        });
+
+        // Notify Students (if approved)
+        if (event.isApproved) {
+            const students = await prisma.user.findMany({ where: { role: "STUDENT" } });
+            await prisma.notification.createMany({
+                data: students.map(student => ({
+                    userId: student.id,
+                    title: "New Event Available",
+                    message: `A new event "${event.title}" has been scheduled.`,
+                    link: "/student/events"
+                }))
+            });
+        }
+
         return NextResponse.json(event);
     } catch (error) {
         if (error instanceof z.ZodError) {

@@ -10,15 +10,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { data: session } = useSession();
 
-    let role: "student" | "alumni" | "admin" = "student";
+    let role: "student" | "alumni" | "admin" | "institute" = "student";
 
     // First try to get role from session
     if (session?.user?.role) {
-        role = session.user.role.toLowerCase() as "student" | "alumni" | "admin";
+        role = session.user.role.toLowerCase() as any;
     } else {
         // Fallback to URL path
         if (pathname.startsWith("/alumni")) role = "alumni";
         if (pathname.startsWith("/admin")) role = "admin";
+        if (pathname.startsWith("/institute")) role = "institute";
     }
 
     return (

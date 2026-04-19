@@ -3,11 +3,14 @@
 import { Badge } from "@/components/ui/Badge";
 import { formatDistanceToNow } from "date-fns";
 import { Check, X, MessageSquare, User } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface MentorshipRequest {
     id: string;
     status: string;
     message: string;
+    menteeId: string;
+    mentorId: string;
     createdAt: string | Date;
     mentee?: {
         name: string | null;
@@ -27,8 +30,39 @@ interface MentorshipRequestCardProps {
 }
 
 export function MentorshipRequestCard({ request, isMentorView = false }: MentorshipRequestCardProps) {
+    const { data: session } = useSession();
     const otherParty = isMentorView ? request.mentee : request.mentor;
     const timeAgo = formatDistanceToNow(new Date(request.createdAt), { addSuffix: true });
+
+    const handleStatusUpdate = async (newStatus: "ACCEPTED" | "REJECTED") => {
+        try {
+            const res = await fetch(`/api/mentorship/${request.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (res.ok) {
+                // If accepted, notify the mentee
+                if (newStatus === "ACCEPTED") {
+                    await fetch("/api/notifications", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userId: request.menteeId,
+                            title: "Mentorship Accepted!",
+                            message: `Your mentorship request to ${session?.user?.name} has been accepted. You can now start messaging!`,
+                            link: "/student/messages"
+                        })
+                    }).catch(console.error); // Silent fail for notification if it errors
+                }
+                
+                window.location.reload(); // Simple refresh to show updated list
+            }
+        } catch (error) {
+            console.error("Failed to update status", error);
+        }
+    };
 
     return (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
@@ -72,10 +106,16 @@ export function MentorshipRequestCard({ request, isMentorView = false }: Mentors
 
                 {isMentorView && request.status === "PENDING" && (
                     <div className="flex gap-2">
-                        <button className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors">
+                        <button 
+                            onClick={() => handleStatusUpdate("REJECTED")}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                        >
                             <X className="w-4 h-4" /> Reject
                         </button>
-                        <button className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors">
+                        <button 
+                            onClick={() => handleStatusUpdate("ACCEPTED")}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+                        >
                             <Check className="w-4 h-4" /> Accept
                         </button>
                     </div>

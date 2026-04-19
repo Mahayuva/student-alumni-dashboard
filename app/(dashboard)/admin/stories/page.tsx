@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Search, Check, X } from "lucide-react";
+import { MessageSquare, Search, Check, X, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import toast from "react-hot-toast";
 
@@ -47,6 +47,26 @@ export default function StoriesApprovalPage() {
             }
         } catch (error) {
             toast.error("Update failed", { id: loadingToast });
+        }
+    };
+
+    const handleDeleteStory = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this story? This action cannot be undone.")) return;
+
+        const loadingToast = toast.loading("Deleting story...");
+        try {
+            const res = await fetch(`/api/admin/stories?id=${id}`, {
+                method: "DELETE"
+            });
+
+            if (res.ok) {
+                toast.success("Story deleted successfully", { id: loadingToast });
+                setStories(stories.filter(st => st.id !== id));
+            } else {
+                toast.error("Delete failed", { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error("Delete failed", { id: loadingToast });
         }
     };
 
@@ -128,6 +148,14 @@ export default function StoriesApprovalPage() {
                                                     title={story.isApproved ? "Reject Story" : "Approve Story"}
                                                 >
                                                     {story.isApproved ? <X className="w-5 h-5" /> : <Check className="w-5 h-5" />}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleDeleteStory(story.id)}
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors bg-white border border-slate-200"
+                                                    title="Delete Story"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </td>

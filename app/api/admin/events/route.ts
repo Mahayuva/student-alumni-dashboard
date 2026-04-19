@@ -39,8 +39,32 @@ export async function PATCH(req: Request) {
 
         const updatedEvent = await prisma.event.update({
             where: { id },
-            data
+            data,
+            include: { postedBy: { select: { id: true, name: true } } }
         });
+
+        // Notify the organizer if approved
+        if (data.isApproved) {
+            await prisma.notification.create({
+                data: {
+                    userId: updatedEvent.postedById,
+                    title: "Event Approved!",
+                    message: `Your event "${updatedEvent.title}" has been approved by the institute.`,
+                    link: "/alumni/dashboard"
+                }
+            });
+
+            // Also notify students now that it's officially approved
+            const students = await prisma.user.findMany({ where: { role: "STUDENT" } });
+            await prisma.notification.createMany({
+                data: students.map(student => ({
+                    userId: student.id,
+                    title: "New Event Available",
+                    message: `A new event "${updatedEvent.title}" has been scheduled.`,
+                    link: "/student/events"
+                }))
+            });
+        }
 
         return NextResponse.json(updatedEvent);
     } catch (e) {

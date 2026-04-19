@@ -11,6 +11,7 @@ enum Role {
   STUDENT
   ALUMNI
   ADMIN
+  INSTITUTE
 }
 
 enum JobType {

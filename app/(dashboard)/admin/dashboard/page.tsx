@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { Briefcase, Calendar, Users, TrendingUp, CheckCircle, AlertCircle, FileText, Settings, UserPlus, MapPin, MoreHorizontal } from "lucide-react";
+import { Briefcase, Calendar, Users, TrendingUp, CheckCircle, AlertCircle, FileText, Settings, UserPlus, MapPin, MoreHorizontal, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -70,11 +70,14 @@ export default function AdminDashboard() {
                     <p className="text-slate-500 text-sm mt-1">Manage your alumni network and monitor engagement</p>
                 </div>
                 <div className="flex gap-2">
-                    <Link href="/admin/reports" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50:bg-slate-700 text-slate-700 shadow-sm flex items-center gap-2">
+                    <Link href="/admin/reports" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 text-slate-700 shadow-sm flex items-center gap-2">
                         <FileText className="w-4 h-4" /> Reports
                     </Link>
-                    <Link href="/admin/events" className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm flex items-center gap-2">
+                    <Link href="/admin/events/create" className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm flex items-center gap-2">
                         <Calendar className="w-4 h-4" /> Create Event
+                    </Link>
+                    <Link href="/admin/jobs/create" className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm flex items-center gap-2">
+                        <Briefcase className="w-4 h-4" /> Post Job
                     </Link>
                 </div>
             </div>
@@ -199,7 +202,10 @@ export default function AdminDashboard() {
                             <Link href="/admin/jobs" className="w-full text-left px-4 py-3 rounded-lg border border-slate-100 hover:border-blue-300:border-blue-700 hover:bg-blue-50:bg-blue-900/20 hover:text-blue-700:text-blue-400 transition-colors text-sm font-medium flex items-center gap-2 text-slate-600">
                                 <Briefcase className="w-4 h-4" /> Moderate Jobs
                             </Link>
-                            <Link href="/admin/stories" className="w-full text-left px-4 py-3 rounded-lg border border-slate-100 hover:border-blue-300:border-blue-700 hover:bg-blue-50:bg-blue-900/20 hover:text-blue-700:text-blue-400 transition-colors text-sm font-medium flex items-center gap-2 text-slate-600">
+                            <Link href="/admin/jobs/create" className="w-full text-left px-4 py-3 rounded-lg border border-slate-100 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-colors text-sm font-medium flex items-center gap-2 text-slate-600">
+                                 <Plus className="w-4 h-4" /> Post Job / Internship
+                             </Link>
+                             <Link href="/admin/stories" className="w-full text-left px-4 py-3 rounded-lg border border-slate-100 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-colors text-sm font-medium flex items-center gap-2 text-slate-600">
                                 <TrendingUp className="w-4 h-4" /> Approve Stories
                             </Link>
                         </div>

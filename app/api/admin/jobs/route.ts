@@ -40,7 +40,31 @@ export async function PATCH(req: Request) {
         const updatedJob = await prisma.job.update({
             where: { id },
             data,
+            include: { postedBy: { select: { id: true, name: true } } }
         });
+
+        // Notify the poster if activated
+        if (data.isActive) {
+            await prisma.notification.create({
+                data: {
+                    userId: updatedJob.postedById,
+                    title: "Job Approved!",
+                    message: `Your job posting for "${updatedJob.title}" at ${updatedJob.company} is now live.`,
+                    link: "/alumni/dashboard"
+                }
+            });
+
+            // Also notify students
+            const students = await prisma.user.findMany({ where: { role: "STUDENT" } });
+            await prisma.notification.createMany({
+                data: students.map(student => ({
+                    userId: student.id,
+                    title: "New Job Opportunity",
+                    message: `${updatedJob.title} at ${updatedJob.company} is now open for applications.`,
+                    link: "/student/jobs"
+                }))
+            });
+        }
 
         return NextResponse.json(updatedJob);
     } catch (e) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Briefcase, Search, Check, X } from "lucide-react";
+import { Briefcase, Search, Check, X, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import toast from "react-hot-toast";
 
@@ -47,6 +47,26 @@ export default function JobsModerationPage() {
             }
         } catch (error) {
             toast.error("Update failed", { id: loadingToast });
+        }
+    };
+
+    const handleDeleteJob = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this job posting? This will also remove all candidate applications.")) return;
+
+        const loadingToast = toast.loading("Deleting job...");
+        try {
+            const res = await fetch(`/api/admin/jobs?id=${id}`, {
+                method: "DELETE"
+            });
+
+            if (res.ok) {
+                toast.success("Job deleted successfully", { id: loadingToast });
+                setJobs(jobs.filter(job => job.id !== id));
+            } else {
+                toast.error("Delete failed", { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error("Delete failed", { id: loadingToast });
         }
     };
 
@@ -130,6 +150,14 @@ export default function JobsModerationPage() {
                                                     title={job.isActive ? "Deactivate Job" : "Activate Job"}
                                                 >
                                                     {job.isActive ? <X className="w-5 h-5" /> : <Check className="w-5 h-5" />}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleDeleteJob(job.id)}
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors bg-white border border-slate-200"
+                                                    title="Delete Job"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </td>

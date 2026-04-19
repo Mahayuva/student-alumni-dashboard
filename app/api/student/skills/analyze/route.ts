@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { z } from "zod";
 import { getGoogleAiKey } from "@/lib/ai-config";
 
 export async function POST(req: Request) {
@@ -17,7 +16,6 @@ export async function POST(req: Request) {
     }
 
     const google = createGoogleGenerativeAI({ apiKey });
-    // TEMPORARY: NO AUTH CHECK
 
     try {
         const formData = await req.formData();
@@ -27,51 +25,59 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
         }
 
-        const buffer = Buffer.from(await file.arrayBuffer());
-        let resumeText = "";
+        const buffer = await file.arrayBuffer();
+        const base64File = Buffer.from(buffer).toString("base64");
 
-        if (file.type === "application/pdf") {
-            // Using a simple, reliable check for PDF text extraction or falling back to raw data parsing
-            // For stability, we'll try to get text or use a clean string representation
-            resumeText = buffer.toString("utf8"); // Fallback to raw text if parsing is problematic
-        } else {
-            resumeText = await file.text();
-        }
-
-        // Generate structured object using Gemini with a STABLE, text-only prompt
-        const { object: rawObject } = await generateObject({
-            model: google("gemini-2.5-flash"),
-            schema: z.object({
-                extracted_skills: z.array(z.string()).describe("A comprehensive list of technical and soft skills extracted from the resume. Up to 15 skills."),
-                summary: z.string().describe("A professional summary of the candidate's profile based on the resume (3-4 sentences)."),
-                actionable_feedback: z.array(z.string()).describe("Top 3-5 clearly defined, actionable feedback points on how to improve the resume."),
-                suggested_missing_skills: z.array(z.string()).describe("Highly demanded market skills in their field that are absent from this resume."),
-                ats_compatibility_score: z.number().describe("ATS resume score out of 100 based on formatting, action verbs, quantification, and impact."),
-                ats_pass_status: z.enum(["Pass", "Needs Improvement", "Fail"]).describe("Is this resume likely to pass corporate Applicant Tracking Systems?"),
-                good_points: z.array(z.string()).describe("3-5 strong points or strengths of this particular resume."),
-                bad_points: z.array(z.string()).describe("3-5 weak points or areas where the resume is lacking (e.g., missing metrics, vague items).")
-            }),
-            prompt: `
-              Analyze the following resume content as an expert recruiter:
-              
-              --- RESUME CONTENT ---
-              ${resumeText.substring(0, 10000)} 
-              --- END CONTENT ---
-              
-              Calculate an ATS compatibility score (0-100), define if it passes ATS ('Pass', 'Needs Improvement', 'Fail'), give good and bad points, extract skills, give a summary, suggest missing skills and provide actionable feedback.
-            `
+        // Use an Indestructible Parsing Strategy: Generate text and manually extract JSON
+        const { text } = await generateText({
+            model: google("gemini-2.5-flash"), 
+            messages: [
+                {
+                    role: "system",
+                    content: `You are an AI Recruitment Engine. You MUST analyze resumes and return a JSON object.
+                    
+                    Required JSON Structure:
+                    {
+                        "extracted_skills": ["Skill 1", "Skill 2"],
+                        "summary": "Professional summary...",
+                        "actionable_feedback": ["Feedback 1"],
+                        "suggested_missing_skills": ["Missing Skill 1"],
+                        "ats_compatibility_score": 85,
+                        "ats_pass_status": "Pass",
+                        "good_points": ["Point 1"],
+                        "bad_points": ["Point 1"]
+                    }
+                    
+                    Respond ONLY with the JSON object.`
+                },
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: "Analyze this resume and provide the structured JSON analysis." },
+                        { 
+                            type: "file" as any, 
+                            data: base64File, 
+                            mimeType: file.type || "application/pdf"
+                        }
+                    ]
+                }
+            ]
         });
 
-        const object = rawObject as {
-            extracted_skills?: string[];
-            summary?: string;
-            actionable_feedback?: string[];
-            suggested_missing_skills?: string[];
-            ats_compatibility_score?: number | null;
-            ats_pass_status?: string;
-            good_points?: string[];
-            bad_points?: string[];
-        };
+        // Robust JSON Extraction
+        let jsonStr = text;
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            jsonStr = jsonMatch[0];
+        }
+
+        let object: any;
+        try {
+            object = JSON.parse(jsonStr);
+        } catch (parseError) {
+            console.error("JSON Parse Error. Raw Text:", text);
+            throw new Error("The AI provided an invalid data format. Please try again.");
+        }
 
         // Find Matching Jobs based on extracted skills
         const allJobs = await prisma.job.findMany({
@@ -85,8 +91,6 @@ export async function POST(req: Request) {
                 requirements: true
             }
         });
-
-        const extractedSkillsLower = (object.extracted_skills || []).map((s: string) => s.toLowerCase());
 
         const matchedJobs = allJobs.map(job => {
             const jobText = (job.title + " " + job.description + " " + job.requirements).toLowerCase();
@@ -102,7 +106,7 @@ export async function POST(req: Request) {
                 matchedSkills: matchedSkills
             };
         })
-            .filter(job => job.matchScore > 20)
+            .filter(job => job.matchScore > 15)
             .sort((a, b) => b.matchScore - a.matchScore)
             .slice(0, 5);
 
@@ -120,6 +124,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Resume Analysis Error:", error);
-        return NextResponse.json({ error: error.message || String(error), stack: error.stack }, { status: 500 });
+        return NextResponse.json({ error: error.message || String(error) }, { status: 500 });
     }
 }
