@@ -3,19 +3,25 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateText } from "ai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 import { getGoogleAiKey } from "@/lib/ai-config";
+import path from "path";
+import { pathToFileURL } from "url";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
 
-    // 1. Get AI Key
+    // 1. Get AI Key (This returns the Groq key stored in the DB/Env)
     const apiKey = await getGoogleAiKey();
     if (!apiKey) {
-        return NextResponse.json({ error: "Missing Google AI API Key. Please provide it in the .env or via Admin Settings." }, { status: 500 });
+        return NextResponse.json({ error: "Missing AI API Key. Please provide it in Admin Settings." }, { status: 500 });
     }
 
-    const google = createGoogleGenerativeAI({ apiKey });
+    // Configure Groq via OpenAI provider (since the key gsk_... is for Groq)
+    const groq = createOpenAI({
+        baseURL: 'https://api.groq.com/openai/v1',
+        apiKey,
+    });
 
     try {
         const formData = await req.formData();
@@ -25,16 +31,44 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
         }
 
-        const buffer = await file.arrayBuffer();
-        const base64File = Buffer.from(buffer).toString("base64");
+        // 2. Extract Text from PDF/File
+        let resumeText = "";
+        const buffer = Buffer.from(await file.arrayBuffer());
 
-        // Use an Indestructible Parsing Strategy: Generate text and manually extract JSON
+        if (file.type === "application/pdf") {
+            try {
+                // Named import from the modern pdf-parse package
+                const { PDFParse } = await import("pdf-parse");
+
+                // Explicitly set the worker path using file:// protocol for ESM compatibility
+                const workerPath = path.resolve(process.cwd(), "node_modules/pdf-parse/dist/pdf-parse/esm/pdf.worker.mjs");
+                const workerUrl = pathToFileURL(workerPath).href;
+                PDFParse.setWorker(workerUrl);
+
+                // Initialize the parser with the PDF data
+                const parser = new PDFParse({ data: new Uint8Array(buffer) });
+                const data = await parser.getText();
+                resumeText = data.text;
+            } catch (pdfError) {
+                console.error("PDF Parsing Error:", pdfError);
+                return NextResponse.json({ error: "Failed to read PDF content. Please try a different file." }, { status: 400 });
+            }
+        } else {
+            // Assume plain text for other types
+            resumeText = buffer.toString("utf-8");
+        }
+
+        if (!resumeText || resumeText.trim().length < 50) {
+            return NextResponse.json({ error: "The resume seems empty or could not be read. Please upload a clear PDF or TXT file." }, { status: 400 });
+        }
+
+        // 3. Analyze Text using Groq
         const { text } = await generateText({
-            model: google("gemini-2.5-flash"), 
+            model: groq("llama-3.3-70b-versatile"), 
             messages: [
                 {
                     role: "system",
-                    content: `You are an AI Recruitment Engine. You MUST analyze resumes and return a JSON object.
+                    content: `You are an AI Recruitment Engine. You MUST analyze the provided resume text and return a JSON object.
                     
                     Required JSON Structure:
                     {
@@ -48,18 +82,11 @@ export async function POST(req: Request) {
                         "bad_points": ["Point 1"]
                     }
                     
-                    Respond ONLY with the JSON object.`
+                    Respond ONLY with the JSON object. Do not include markdown formatting or extra text.`
                 },
                 {
                     role: "user",
-                    content: [
-                        { type: "text", text: "Analyze this resume and provide the structured JSON analysis." },
-                        { 
-                            type: "file" as any, 
-                            data: base64File, 
-                            mimeType: file.type || "application/pdf"
-                        }
-                    ]
+                    content: `Analyze this resume text and provide the structured JSON analysis:\n\n${resumeText}`
                 }
             ]
         });
