@@ -1,8 +1,9 @@
 "use client";
 
-import { Bot, Send, X, User } from "lucide-react";
+import { Bot, Send, X, User, ExternalLink } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useChat } from "ai/react";
+import ReactMarkdown from "react-markdown";
 
 export function Chatbot() {
     const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +22,35 @@ export function Chatbot() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const MarkdownComponents = {
+        a: ({ href, children }: { href?: string; children: any }) => {
+            const childrenText = Array.isArray(children) ? children[0] : children;
+            const isConnect = typeof childrenText === 'string' && childrenText.toLowerCase().includes("connect");
+            if (isConnect) {
+                return (
+                    <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 bg-gradient-to-r from-[#0077b5] to-[#00a0dc] text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 hover:scale-[1.02] active:scale-[0.98] transition-all no-underline"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                        Connect on LinkedIn
+                    </a>
+                );
+            }
+            return (
+                <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">
+                    {children}
+                </a>
+            );
+        },
+        p: ({ children }: { children: any }) => <p className="mb-2 last:mb-0">{children}</p>,
+        ul: ({ children }: { children: any }) => <ul className="list-disc ml-4 mb-2 space-y-1">{children}</ul>,
+        li: ({ children }: { children: any }) => <li className="text-[13px]">{children}</li>,
+        strong: ({ children }: { children: any }) => <strong className="font-bold text-slate-900">{children}</strong>,
+    };
+
     return (
         <>
             {!isOpen && (
@@ -34,7 +64,7 @@ export function Chatbot() {
             )}
 
             {isOpen && (
-                <div className="fixed bottom-6 right-6 w-80 md:w-96 h-[500px] bg-white rounded-3xl shadow-2xl border border-primary/10 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+                <div className="fixed bottom-6 right-6 w-80 md:w-96 h-[600px] bg-white rounded-3xl shadow-2xl border border-primary/10 flex flex-col z-50 overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
                     {/* Header */}
                     <div className="p-5 bg-gradient-to-r from-primary to-primary/80 flex justify-between items-center text-white">
                         <div className="flex items-center gap-3">
@@ -65,14 +95,22 @@ export function Chatbot() {
                                 )}
 
                                 <div
-                                    className={`max-w-[80%] p-4 rounded-2xl text-[13px] leading-relaxed font-medium ${msg.role === "user"
-                                        ? "bg-primary text-white rounded-tr-none shadow-md shadow-primary-shadow"
+                                    className={`max-w-[85%] p-4 rounded-2xl text-[13px] leading-relaxed ${msg.role === "user"
+                                        ? "bg-primary text-white rounded-tr-none shadow-md shadow-primary-shadow font-medium"
                                         : "bg-white border border-slate-100 text-slate-700 rounded-tl-none shadow-sm"
                                         }`}
                                 >
-                                    <div className="whitespace-pre-wrap break-words">
-                                        {msg.content}
-                                    </div>
+                                    {msg.role === 'user' ? (
+                                        <div className="whitespace-pre-wrap break-words">
+                                            {msg.content}
+                                        </div>
+                                    ) : (
+                                        <div className="prose prose-sm max-w-none">
+                                            <ReactMarkdown components={MarkdownComponents as any}>
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {msg.role === 'user' && (
@@ -101,7 +139,7 @@ export function Chatbot() {
                     <form onSubmit={handleSubmit} className="p-4 bg-white border-t border-slate-100 flex items-center gap-3">
                         <input
                             type="text"
-                            placeholder="Ask about jobs or mentors..."
+                            placeholder="Paste a LinkedIn link or ask a question..."
                             className="flex-1 bg-slate-50 border border-slate-100 focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-3 text-sm transition-all outline-none font-medium placeholder:text-slate-400"
                             value={input || ""}
                             onChange={handleInputChange}

@@ -1,4 +1,5 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
+RUN apk add --no-cache openssl
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -22,6 +23,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npx prisma generate
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/unused"
 RUN npm run build
 
 # Production image, copy all the files and run next

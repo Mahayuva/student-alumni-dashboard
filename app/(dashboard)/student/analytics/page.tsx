@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+export const dynamic = "force-dynamic";
+
 import { Briefcase, Building2, MapPin, TrendingUp } from "lucide-react";
 import { AnalyticsCharts } from "./Charts";
 

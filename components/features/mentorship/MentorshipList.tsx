@@ -8,6 +8,8 @@ interface MentorshipRequest {
     id: string;
     status: string;
     message: string;
+    menteeId: string;
+    mentorId: string;
     createdAt: string | Date;
     mentee?: {
         name: string | null;
