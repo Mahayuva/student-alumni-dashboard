@@ -17,7 +17,7 @@ export default function SettingsPage() {
             fetch("/api/admin/config")
                 .then(res => res.json())
                 .then(data => {
-                    const keyConfig = data.find((c: any) => c.key === "GOOGLE_AI_KEY");
+                    const keyConfig = data.find((c: any) => c.key === "GROQ_API_KEY" || c.key === "GOOGLE_AI_KEY");
                     if (keyConfig) setAiKey(keyConfig.value);
                 })
                 .catch(err => console.error("Failed to fetch config", err));
@@ -119,7 +119,7 @@ export default function SettingsPage() {
             const res = await fetch("/api/admin/config", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ key: "GOOGLE_AI_KEY", value: aiKey })
+                body: JSON.stringify({ key: "GROQ_API_KEY", value: aiKey })
             });
             if (res.ok) alert("AI Settings Updated!");
         } catch (e) {
@@ -496,20 +496,20 @@ export default function SettingsPage() {
                             <div className="space-y-4 max-w-2xl">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold flex items-center gap-2">
-                                        Google AI Studio API Key (Gemini)
-                                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded uppercase">Encrypted</span>
+                                        Groq API Key
+                                        <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded uppercase">Encrypted</span>
                                     </label>
                                     <div className="relative group">
-                                        <Shield className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                        <Shield className="absolute left-3 top-3 w-5 h-5 text-slate-400 group-hover:text-green-500 transition-colors" />
                                         <input 
                                             type="password" 
-                                            placeholder="AIzaSy..." 
+                                            placeholder="gsk_..." 
                                             value={aiKey}
                                             onChange={(e) => setAiKey(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm" 
+                                            className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-green-500 outline-none transition-all font-mono text-sm" 
                                         />
                                     </div>
-                                    <p className="text-xs text-slate-400">Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-blue-500 underline">Google AI Studio</a>. This will override the one in your .env file.</p>
+                                    <p className="text-xs text-slate-400">Get a free key from <a href="https://console.groq.com/keys" target="_blank" className="text-green-600 underline font-medium">console.groq.com/keys</a>. Free tier: 14,400 requests/day. This will override the one in your .env file.</p>
                                 </div>
                                 <div className="pt-2">
                                     <button 
@@ -536,7 +536,7 @@ export default function SettingsPage() {
                             <Bell className="w-6 h-6 text-blue-500 shrink-0" />
                             <div>
                                 <h3 className="font-semibold text-blue-900">Pro-Tip for Admins</h3>
-                                <p className="text-sm text-blue-700 mt-1">Changes to the AI API key are instant. If your chatbot or skill analyzer stops working, verify your key has not reached its quota limits at the Google Cloud Console.</p>
+                                <p className="text-sm text-blue-700 mt-1">Changes to the Groq API key are instant. Get a free key at <a href="https://console.groq.com/keys" target="_blank" className="underline font-semibold">console.groq.com/keys</a> — free tier gives 14,400 requests/day with no daily hard limits.</p>
                             </div>
                         </div>
                     </div>

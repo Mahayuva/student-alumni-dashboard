@@ -5,16 +5,35 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "8085:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/student_alumni?schema=public
       - NEXTAUTH_SECRET=changeme_in_production
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=http://localhost:8085
+      - LINKEDIN_SCRAPER_URL=http://python-scraper:8000
     depends_on:
       db:
         condition: service_healthy
       db-setup:
         condition: service_completed_successfully
+      python-scraper:
+        condition: service_healthy
+    restart: always
+
+  python-scraper:
+    build:
+      context: ./python-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - LINKEDIN_EMAIL=${LINKEDIN_EMAIL:-}
+      - LINKEDIN_PASSWORD=${LINKEDIN_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: always
 
   db:
@@ -28,7 +47,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d student_alumni"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d student_alumni" ]
       interval: 5s
       timeout: 5s
       retries: 5

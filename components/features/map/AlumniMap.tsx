@@ -31,7 +31,8 @@ export default function AlumniMap() {
                 (position) => {
                     setUserLocation([position.coords.latitude, position.coords.longitude]);
                 },
-                (error) => console.error("Error getting location:", error)
+                (error) => console.warn("Geolocation unavailable:", error.message)
+
             );
         }
     }, []);

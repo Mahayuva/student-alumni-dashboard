@@ -1,4 +1,4 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { prisma } from '@/lib/db';
 import { getServerSession } from "next-auth";
@@ -23,21 +23,28 @@ export async function POST(req: Request) {
         // 1. Authenticate Request
         const session = await getServerSession(authOptions);
         if (!session?.user?.email) {
-            const errorStream = createMockStream("Please log in to use the AI Career Advisor.");
-            return new Response(errorStream, { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" } });
+            return new Response(createMockStream("Please log in to use the AI Career Advisor."), {
+                headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" }
+            });
         }
 
         // 2. Fetch API key from DB or ENV
         const apiKey = await getGoogleAiKey();
-
         if (!apiKey) {
-            const warningText = "⚠️ **Missing API Key**\n\nI am your new Pro-Level Machine Learning Chatbot! To unlock my intelligence, please add **`GOOGLE_GENERATIVE_AI_API_KEY`** to your `.env` file or update it in the Admin Dashboard Settings.";
-            return new Response(createMockStream(warningText), { headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" } });
+            const warningText = "⚠️ **Missing API Key**\n\nPlease add `GOOGLE_GENERATIVE_AI_API_KEY` to your `.env` file.";
+            return new Response(createMockStream(warningText), {
+                headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" }
+            });
         }
 
-        const google = createGoogleGenerativeAI({ apiKey });
+        // Use Groq via OpenAI-compatible endpoint (works with ai@3.x)
+        const groq = createOpenAI({
+            baseURL: 'https://api.groq.com/openai/v1',
+            apiKey,
+        });
 
-        // 3. Fetch Personal & Platform Data Context for the ML Model
+
+        // 3. Fetch Platform Data
         const currentUserProfile = await prisma.profile.findFirst({
             where: { user: { email: session.user.email } },
             include: { user: true }
@@ -50,50 +57,154 @@ export async function POST(req: Request) {
 
         const allAlumni = await prisma.profile.findMany({
             where: { user: { role: 'ALUMNI' } },
-            select: { user: { select: { name: true } }, company: true, currentRole: true, industry: true, skills: true }
+            select: {
+                user: { select: { name: true, email: true } },
+                company: true, currentRole: true, industry: true, skills: true, linkedin: true
+            }
         });
 
-        // 4. Build Intelligent System Prompt for Gemini
+        // 4. ⭐ LinkedIn Detection — URL + Pasted Text Flow
+        const linkedinRegex = /https?:\/\/(www\.)?linkedin\.com\/in\/([a-zA-Z0-9_%-]+)\/?/i;
+        const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
+        const lastAiMessage  = messages.filter((m: any) => m.role === 'assistant').pop();
+
+        // Scan ALL user messages for a LinkedIn URL (handles multi-turn: URL first, then paste)
+        let linkedinUrl: string | null = null;
+        for (const msg of [...messages].reverse()) {
+            if (msg.role !== 'user') continue;
+            const m = (msg.content || '').match(linkedinRegex);
+            if (m) { linkedinUrl = m[0]; break; }
+        }
+
+        // Extract pasted profile text from the CURRENT message (text beyond just the URL)
+        let pastedProfileText: string | null = null;
+        if (lastUserMessage?.content) {
+            const stripped = (lastUserMessage.content as string).replace(linkedinRegex, '').trim();
+            if (stripped.length > 80) pastedProfileText = stripped;
+        }
+
+        // Also detect follow-up paste: AI asked for text, user now sends a long message
+        const aiAskedForPaste = lastAiMessage?.content &&
+            (lastAiMessage.content as string).toLowerCase().includes('paste');
+        if (!pastedProfileText && aiAskedForPaste && (lastUserMessage?.content || '').length > 80) {
+            pastedProfileText = lastUserMessage.content as string;
+        }
+
+        const linkedinMode: 'analyze' | 'ask' | 'none' =
+            linkedinUrl && pastedProfileText ? 'analyze' :
+            linkedinUrl                      ? 'ask'     : 'none';
+
+        // 5. Build System Prompt
         const systemPrompt = `
-You are the Alumni Connect Premium AI Bot, a pro-level machine learning career advisor.
-You help students on the platform by:
-1. Recommending open jobs posted on the dashboard.
-2. Recommending specific Alumni to DM based on matching fields, skills, or industries.
-3. Suggesting ways to improve their skills or analyzing their LinkedIn profile if they ask.
+You are the **Alumsphere AI Expert Career Advisor** — a professional AI assistant for students seeking career guidance, job matching, and alumni networking on the Alumsphere platform.
 
---- USER CONTEXT ---
-Name: ${currentUserProfile?.user?.name || "Student"}
-Email: ${currentUserProfile?.user?.email}
-Their Skills: ${currentUserProfile?.skills?.join(', ') || 'None listed'}
-Their LinkedIn: ${currentUserProfile?.linkedin || 'None provided'}
-Their Bio/Headline: ${currentUserProfile?.headline || ''} - ${currentUserProfile?.bio || ''}
+--- STUDENT CONTEXT ---
+- Name: ${currentUserProfile?.user?.name || 'Student'}
+- Skills: ${currentUserProfile?.skills?.join(', ') || 'Not specified'}
+- Department: ${(currentUserProfile as any)?.department || 'Not specified'}
+- Headline: ${currentUserProfile?.headline || 'Not set'}
 
---- ACTIVE JOBS ON PLATFORM ---
-${JSON.stringify(activeJobs)}
+--- ACTIVE JOB OPPORTUNITIES ---
+${JSON.stringify(activeJobs, null, 2)}
 
---- AVAILABLE ALUMNI TO NETWORK WITH ---
-${JSON.stringify(allAlumni)}
+--- ALUMNI NETWORK ---
+${JSON.stringify(allAlumni, null, 2)}
 
---- INSTRUCTIONS ---
-- Always respond professionally but warmly.
-- When they ask for job recommendations, map their "User Context" skills to the "Active Jobs" requirements. Give concrete reasons.
-- When they want to network, recommend a specific Alumni from the list whose 'industry' or 'currentRole' matches the user's focus. Encourage them to DM the Alumni.
-- If they ask to analyze their profile/LinkedIn, provide a short summary and actionable tips based on their current skills.
+--- LINKEDIN PROFILE ANALYSIS MODE: ${linkedinMode.toUpperCase()} ---
+${
+    linkedinMode === 'ask' ? `
+The student just shared a LinkedIn profile URL: ${linkedinUrl}
 
-KEEP RESPONSES CONCISE AND EASY TO READ using MARKDOWN format.
+IMPORTANT: You cannot browse LinkedIn directly. Respond with EXACTLY this message:
+
+---
+🔗 **LinkedIn Profile Detected!**
+
+I can see you've shared: ${linkedinUrl}
+
+To give you a detailed professional analysis, please **paste the profile content** directly into this chat:
+
+📋 **How to copy the LinkedIn profile text:**
+1. Open the LinkedIn profile in your browser
+2. Select all the text on the page (Ctrl+A / Cmd+A)
+3. Copy it (Ctrl+C / Cmd+C)
+4. Paste it here in the chat
+
+Once you paste it, I'll provide a complete analysis including skills assessment, career path evaluation, and recommended alumni connections! 🚀
+---
+` : linkedinMode === 'analyze' ? `
+The student shared a LinkedIn profile${linkedinUrl ? ` (${linkedinUrl})` : ''} and pasted this profile content:
+
+--- PASTED LINKEDIN CONTENT ---
+${pastedProfileText}
+--- END OF PASTED CONTENT ---
+
+Perform TEXT CLASSIFICATION and PROFESSIONAL ANALYSIS on this content. Respond with EXACTLY this structure:
+
+### 🔍 Professional Profile Analysis
+
+**📋 Professional Summary**
+[2-3 sentences: who this person is, their career stage, core identity]
+
+**🎯 Domain Expertise**
+[Bullet list of their primary technical/professional domains extracted from the text]
+
+**🎓 Educational Background**
+[Their education details extracted from the text]
+
+**🏆 Key Qualifications & Skills**
+[Bullet list of top skills, certifications, tools extracted from the text]
+
+**✅ Career Fit Assessment**
+[How well does their career path align with a ${(currentUserProfile as any)?.department || 'Computer Science'} student's goals?]
+
+**🤝 Recommended Alumni Connection**
+[Pick 1 person from the Alumni Network above who works in a similar field. Explain why the student should connect.]
+${linkedinUrl ? `
+[Connect on LinkedIn](${linkedinUrl})` : ''}
+` : `
+- Answer career, job, and networking questions for the student
+- Recommend jobs that match their skills from the Active Job Opportunities list
+- Suggest relevant alumni from the Alumni Network to connect with
+- Use clear Markdown formatting
+- Be concise, professional, and encouraging
+- If the student shares a LinkedIn URL without profile text, follow the LINKEDIN PROFILE ANALYSIS MODE instructions
+`
+}
 `;
 
-        // 5. Stream Response from ML Model
+
+        // 6. Stream Response
         const result = await streamText({
-            model: google('gemini-2.5-flash'),
+            model: groq('llama-3.3-70b-versatile'),
+
             system: systemPrompt,
             messages,
         });
 
-        // Ensure we send the correct stream header for Next.js AI SDK hooks
         return result.toDataStreamResponse();
-    } catch (error) {
+
+    } catch (error: any) {
         console.error("AI Chat Error:", error);
-        return new Response("Error connecting to the AI Model.", { status: 500 });
+
+        // Friendly quota/rate limit message
+        if (error?.lastError?.statusCode === 429 || error?.statusCode === 429) {
+            const quotaMsg = "⚠️ **AI Quota Limit Reached**\n\nThe AI advisor has temporarily hit its daily usage limit. Please try again in a few hours, or ask your administrator to update the API key in **Admin Settings** with a key from a new Google project.\n\n[Get a free key →](https://aistudio.google.com/app/apikey)";
+            return new Response(createMockStream(quotaMsg), {
+                headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" }
+            });
+        }
+
+        // Friendly model not found message
+        if (error?.lastError?.statusCode === 404 || error?.statusCode === 404) {
+            const modelMsg = "⚠️ **AI Model Unavailable**\n\nThe selected AI model is not available for your current API key. Please contact your administrator to update the API key in **Admin Settings**.";
+            return new Response(createMockStream(modelMsg), {
+                headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" }
+            });
+        }
+
+        return new Response(createMockStream("⚠️ AI service is temporarily unavailable. Please try again shortly."), {
+            headers: { "Content-Type": "text/plain; charset=utf-8", "X-Vercel-AI-Data-Stream": "v1" }
+        });
     }
 }

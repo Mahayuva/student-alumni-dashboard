@@ -8,57 +8,80 @@ export interface LinkedInProfile {
     profileUrl: string;
 }
 
+/**
+ * Fetches LinkedIn profile data via the Python scraper microservice.
+ * 
+ * Flow:
+ *   1. Try Python service (linkedin-api with credentials if available, else public scraping)
+ *   2. If service unavailable, use smart name-based fallback
+ */
 export async function getLinkedInProfile(url: string): Promise<LinkedInProfile | null> {
     const profileId = url.split('/in/')[1]?.split('/')[0]?.split('?')[0];
-    
     if (!profileId) return null;
 
-    const lowerId = profileId.toLowerCase();
+    // ── Try Python microservice ──────────────────────────────────────────────
+    const scraperUrl = process.env.LINKEDIN_SCRAPER_URL || 'http://localhost:8000';
+    
+    try {
+        const response = await fetch(
+            `${scraperUrl}/profile?url=${encodeURIComponent(url)}`,
+            { 
+                signal: AbortSignal.timeout(8000), // 8s timeout
+                headers: { 'Content-Type': 'application/json' }
+            }
+        );
 
-    // Comprehensive mock profiles for demonstration
-    const mocks: Record<string, LinkedInProfile> = {
-        'maha17': {
-            name: "Mahalakshmi Y",
-            headline: "Software Engineer & AI Enthusiast | BE CSE Student at KVCET",
-            about: "Dynamic Computer Science Engineering student with a focus on Full Stack Development and AI. Proven track record of solving 500+ problems on LeetCode and building scalable web applications. Passionate about leveraging technology to solve educational and community challenges.",
-            education: [
-                "B.E. in Computer Science and Engineering - Karpaga Vinayaga College of Engineering and Technology (2022-2026)",
-                "Specialization in Machine Learning and Data Structures"
-            ],
-            qualifications: [
-                "Full Stack Web Development - Udemy Certified",
-                "Advanced Python for Data Science",
-                "Consistent 'Knight' rank on LeetCode",
-                "Technical Stack: React, Next.js, Node.js, Python, PostgreSQL"
-            ],
-            profileUrl: url
-        },
-        'lokesh-m-dev': {
-            name: "Lokesh M",
-            headline: "Senior Full Stack Developer | Next.js Expert | Alumni Mentor",
-            about: "Experienced Software Architect with over 5 years in the industry. Specializing in high-performance web architectures and AI integration. Dedicated to mentoring the next generation of engineers.",
-            education: [
-                "B.E. in Computer Science - KVCET Alumni",
-                "M.S. in Software Systems - BITS Pilani"
-            ],
-            qualifications: [
-                "AWS Certified Solutions Architect",
-                "Expert in Microservices & Cloud Native Apps",
-                "Open Source Contributor to Next.js and Prisma"
-            ],
-            profileUrl: url
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`[LinkedIn] Scraped profile via Python service (source: ${data.source})`);
+            return {
+                name: data.name || formatNameFromId(profileId),
+                headline: data.headline || 'Technology Professional',
+                about: data.about || `View full profile at ${url}`,
+                education: data.education || [],
+                qualifications: data.qualifications || [],
+                profileUrl: url,
+            };
         }
-    };
+    } catch (err: any) {
+        // Service unavailable — use fallback silently
+        if (err.name !== 'TimeoutError') {
+            console.warn('[LinkedIn] Python scraper unavailable, using fallback:', err.message);
+        } else {
+            console.warn('[LinkedIn] Python scraper timed out, using fallback');
+        }
+    }
 
-    if (mocks[lowerId]) return mocks[lowerId];
+    // ── Smart Fallback (when service is down / local dev without Docker) ─────
+    return buildFallback(profileId, url);
+}
 
-    // Professional Fallback
+
+/** Parse profile ID like 'harinikarthik16' or 'john-doe' into a readable name */
+function formatNameFromId(profileId: string): string {
+    const clean = profileId.replace(/\d+/g, '').replace(/[-_]/g, ' ').trim();
+    return clean
+        .split(' ')
+        .filter(Boolean)
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(' ') || profileId;
+}
+
+function buildFallback(profileId: string, url: string): LinkedInProfile {
+    const name = formatNameFromId(profileId);
     return {
-        name: profileId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
-        headline: "Technology Professional | Industry Specialist",
-        about: "A seasoned professional with extensive experience in the technology sector, focused on driving innovation and achieving strategic goals through technical excellence.",
-        education: ["Higher Education in Specialized Technical Domain"],
-        qualifications: ["Core Competencies: Strategy, Technical Leadership, Problem Solving"],
-        profileUrl: url
+        name,
+        headline: 'Technology & Software Development Professional',
+        about:
+            `${name} is a professional in the technology industry. ` +
+            `Their LinkedIn profile at ${url} contains more detailed information about their experience, ` +
+            `education, and skills. Connect with them directly on LinkedIn to learn more.`,
+        education: ['Engineering / Technology Degree (Computer Science or related field)'],
+        qualifications: [
+            'Software Development & Engineering',
+            'Problem Solving & Analytical Thinking',
+            'Collaborative Team Player',
+        ],
+        profileUrl: url,
     };
 }
