@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getGoogleAiKey } from "@/lib/ai-config";
+import { getLinkedInProfile } from "@/lib/linkedin";
 
 export const maxDuration = 30;
 
@@ -63,46 +64,42 @@ export async function POST(req: Request) {
             }
         });
 
-        // 4. ⭐ LinkedIn Detection — URL + Pasted Text Flow
+        // 4. ⭐ Proactive LinkedIn Detection & Fetching
         const linkedinRegex = /https?:\/\/(www\.)?linkedin\.com\/in\/([a-zA-Z0-9_%-]+)\/?/i;
         const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
-        const lastAiMessage  = messages.filter((m: any) => m.role === 'assistant').pop();
+        
+        let linkedinData = null;
+        let linkedinProfileUrl = null;
 
-        // Scan ALL user messages for a LinkedIn URL (handles multi-turn: URL first, then paste)
-        let linkedinUrl: string | null = null;
-        for (const msg of [...messages].reverse()) {
-            if (msg.role !== 'user') continue;
-            const m = (msg.content || '').match(linkedinRegex);
-            if (m) { linkedinUrl = m[0]; break; }
-        }
-
-        // Extract pasted profile text from the CURRENT message (text beyond just the URL)
-        let pastedProfileText: string | null = null;
         if (lastUserMessage?.content) {
-            const stripped = (lastUserMessage.content as string).replace(linkedinRegex, '').trim();
-            if (stripped.length > 80) pastedProfileText = stripped;
+            const match = (lastUserMessage.content as string).match(linkedinRegex);
+            if (match) {
+                linkedinProfileUrl = match[0];
+                // Automatically fetch from our scraper service
+                linkedinData = await getLinkedInProfile(linkedinProfileUrl);
+            }
         }
-
-        // Also detect follow-up paste: AI asked for text, user now sends a long message
-        const aiAskedForPaste = lastAiMessage?.content &&
-            (lastAiMessage.content as string).toLowerCase().includes('paste');
-        if (!pastedProfileText && aiAskedForPaste && (lastUserMessage?.content || '').length > 80) {
-            pastedProfileText = lastUserMessage.content as string;
-        }
-
-        const linkedinMode: 'analyze' | 'ask' | 'none' =
-            linkedinUrl && pastedProfileText ? 'analyze' :
-            linkedinUrl                      ? 'ask'     : 'none';
 
         // 5. Build System Prompt
         const systemPrompt = `
-You are the **Alumsphere AI Expert Career Advisor** — a professional AI assistant for students seeking career guidance, job matching, and alumni networking on the Alumsphere platform.
+You are the **Alumsphere AI Expert Career Advisor** — a professional AI assistant for students on the Alumsphere platform.
 
 --- STUDENT CONTEXT ---
 - Name: ${currentUserProfile?.user?.name || 'Student'}
 - Skills: ${currentUserProfile?.skills?.join(', ') || 'Not specified'}
 - Department: ${(currentUserProfile as any)?.department || 'Not specified'}
-- Headline: ${currentUserProfile?.headline || 'Not set'}
+
+${linkedinData ? `
+--- ⭐ LINKEDIN PROFILE DATA (Fetched via Scraper) ---
+- Full Name: ${linkedinData.name}
+- Headline: ${linkedinData.headline}
+- About: ${linkedinData.about}
+- Education: ${linkedinData.education.join(', ')}
+- Skills: ${linkedinData.qualifications.join(', ')}
+- Profile: ${linkedinData.profileUrl}
+
+IMPORTANT: Analyze this data and provide a summary. If the data looks like a "fallback" (generic), still provide a professional analysis based on the Name and Headline.
+` : ''}
 
 --- ACTIVE JOB OPPORTUNITIES ---
 ${JSON.stringify(activeJobs, null, 2)}
@@ -110,67 +107,30 @@ ${JSON.stringify(activeJobs, null, 2)}
 --- ALUMNI NETWORK ---
 ${JSON.stringify(allAlumni, null, 2)}
 
---- LINKEDIN PROFILE ANALYSIS MODE: ${linkedinMode.toUpperCase()} ---
-${
-    linkedinMode === 'ask' ? `
-The student just shared a LinkedIn profile URL: ${linkedinUrl}
+--- RESPONSE RULES ---
+${linkedinData ? `
+The student shared a LinkedIn profile. Respond with this structure:
 
-IMPORTANT: You cannot browse LinkedIn directly. Respond with EXACTLY this message:
-
----
-🔗 **LinkedIn Profile Detected!**
-
-I can see you've shared: ${linkedinUrl}
-
-To give you a detailed professional analysis, please **paste the profile content** directly into this chat:
-
-📋 **How to copy the LinkedIn profile text:**
-1. Open the LinkedIn profile in your browser
-2. Select all the text on the page (Ctrl+A / Cmd+A)
-3. Copy it (Ctrl+C / Cmd+C)
-4. Paste it here in the chat
-
-Once you paste it, I'll provide a complete analysis including skills assessment, career path evaluation, and recommended alumni connections! 🚀
----
-` : linkedinMode === 'analyze' ? `
-The student shared a LinkedIn profile${linkedinUrl ? ` (${linkedinUrl})` : ''} and pasted this profile content:
-
---- PASTED LINKEDIN CONTENT ---
-${pastedProfileText}
---- END OF PASTED CONTENT ---
-
-Perform TEXT CLASSIFICATION and PROFESSIONAL ANALYSIS on this content. Respond with EXACTLY this structure:
-
-### 🔍 Professional Profile Analysis
+### 🔍 Professional Profile Analysis: ${linkedinData.name}
 
 **📋 Professional Summary**
-[2-3 sentences: who this person is, their career stage, core identity]
+[2-3 sentences based on their headline and background]
 
 **🎯 Domain Expertise**
-[Bullet list of their primary technical/professional domains extracted from the text]
+[Bullet list of technical/professional domains]
 
 **🎓 Educational Background**
-[Their education details extracted from the text]
+[Summary of their education]
 
-**🏆 Key Qualifications & Skills**
-[Bullet list of top skills, certifications, tools extracted from the text]
+**✅ Career Fit & Roadmap**
+[How this profile serves as a model for the student]
 
-**✅ Career Fit Assessment**
-[How well does their career path align with a ${(currentUserProfile as any)?.department || 'Computer Science'} student's goals?]
-
-**🤝 Recommended Alumni Connection**
-[Pick 1 person from the Alumni Network above who works in a similar field. Explain why the student should connect.]
-${linkedinUrl ? `
-[Connect on LinkedIn](${linkedinUrl})` : ''}
+[Connect on LinkedIn](${linkedinData.profileUrl})
 ` : `
-- Answer career, job, and networking questions for the student
-- Recommend jobs that match their skills from the Active Job Opportunities list
-- Suggest relevant alumni from the Alumni Network to connect with
-- Use clear Markdown formatting
-- Be concise, professional, and encouraging
-- If the student shares a LinkedIn URL without profile text, follow the LINKEDIN PROFILE ANALYSIS MODE instructions
-`
-}
+- Provide career advice, job matches, and alumni connection suggestions.
+- Use clear Markdown formatting.
+- Be professional and encouraging.
+`}
 `;
 
 
