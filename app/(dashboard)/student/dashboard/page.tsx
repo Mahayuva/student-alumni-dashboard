@@ -46,10 +46,10 @@ export default function StudentDashboard() {
     }, [session]);
 
     const statItems = [
-        { label: "Job Applications", value: (stats?.jobApplications || 0).toString(), trend: "View All", color: "bg-primary-light text-primary", icon: Briefcase },
-        { label: "Events Registered", value: (stats?.eventsRegistered || 0).toString(), trend: "View All", color: "bg-orange-50 text-orange-600", icon: Calendar },
-        { label: "Mentors Connected", value: (stats?.connections || 0).toString(), trend: "View All", color: "bg-green-50 text-green-600", icon: Users },
-        { label: "Profile Views", value: (stats?.profileViews || 0).toString(), trend: "Coming Soon", color: "bg-purple-50 text-purple-600", icon: TrendingUp },
+        { label: "Job Applications", value: (stats?.jobApplications || 0).toString(), trend: "View All", href: "/student/jobs", color: "bg-primary-light text-primary", icon: Briefcase },
+        { label: "Events Registered", value: (stats?.eventsRegistered || 0).toString(), trend: "View All", href: "/student/events", color: "bg-orange-50 text-orange-600", icon: Calendar },
+        { label: "Mentors Connected", value: (stats?.connections || 0).toString(), trend: "View All", href: "/student/alumni", color: "bg-green-50 text-green-600", icon: Users },
+        { label: "Profile Views", value: (stats?.profileViews || 0).toString(), trend: "Coming Soon", href: null, color: "bg-purple-50 text-purple-600", icon: TrendingUp },
     ];
 
     return (
@@ -75,7 +75,18 @@ export default function StudentDashboard() {
                             <div className={`p-3 rounded-lg ${stat.color}`}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
-                            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">{stat.trend || "Stable"}</span>
+                            {stat.href ? (
+                                <Link 
+                                    href={stat.href}
+                                    className="text-[10px] font-bold text-primary bg-primary-light px-2.5 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-all uppercase tracking-wider shadow-sm"
+                                >
+                                    {stat.trend}
+                                </Link>
+                            ) : (
+                                <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1.5 rounded-lg uppercase tracking-wider">
+                                    {stat.trend || "Stable"}
+                                </span>
+                            )}
                         </div>
                         <div className="text-3xl font-bold text-slate-800">{stat.value}</div>
                         <div className="text-sm text-slate-500 mt-1">{stat.label}</div>

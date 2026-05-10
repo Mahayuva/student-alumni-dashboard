@@ -69,10 +69,10 @@ export default function AlumniDashboard() {
     const activeStudents = userMentorships.filter(m => m.status === "ACCEPTED");
 
     const stats = [
-        { label: "Mentorship Requests", value: pendingRequests.length.toString(), trend: "", icon: UserPlus, color: "bg-purple-50 text-purple-600" },
-        { label: "Students Connected", value: activeStudents.length.toString(), trend: "", icon: MessageSquare, color: "bg-primary-light text-primary" },
-        { label: "Jobs Posted", value: jobs.length.toString(), trend: "", icon: Briefcase, color: "bg-green-50 text-green-600" },
-        { label: "Events Created", value: events.length.toString(), trend: "", icon: Calendar, color: "bg-orange-50 text-orange-600" },
+        { label: "Mentorship Requests", value: pendingRequests.length.toString(), trend: "View All", href: "/alumni/requests", icon: UserPlus, color: "bg-purple-50 text-purple-600" },
+        { label: "Students Connected", value: activeStudents.length.toString(), trend: "View All", href: "/alumni/messages", icon: MessageSquare, color: "bg-primary-light text-primary" },
+        { label: "Jobs Posted", value: jobs.length.toString(), trend: "View All", href: "/alumni/jobs", icon: Briefcase, color: "bg-green-50 text-green-600" },
+        { label: "Events Created", value: events.length.toString(), trend: "View All", href: "/alumni/events", icon: Calendar, color: "bg-orange-50 text-orange-600" },
     ];
 
     return (
@@ -100,14 +100,21 @@ export default function AlumniDashboard() {
                 {stats.map((stat, i) => (
                     <div key={i} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                         <div className={`absolute -right-4 -top-4 w-20 h-20 rounded-full opacity-10 ${stat.color.replace('text', 'bg')}`}></div>
-                        <div className="flex justify-between items-start mb-4 relative z-10">
-                            <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
-                            <div className={`p-2 rounded-lg ${stat.color}`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <div className={`p-3 rounded-lg ${stat.color}`}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
+                            {stat.href && (
+                                <Link 
+                                    href={stat.href}
+                                    className="text-[10px] font-bold text-primary bg-primary-light px-2.5 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-all uppercase tracking-wider shadow-sm"
+                                >
+                                    {stat.trend}
+                                </Link>
+                            )}
                         </div>
                         <div className="text-3xl font-bold text-slate-900 mb-1">{stat.value}</div>
-                        {stat.trend && <div className="text-xs text-green-600 font-medium">{stat.trend}</div>}
+                        <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
                     </div>
                 ))}
             </div>
