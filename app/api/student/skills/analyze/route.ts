@@ -37,18 +37,11 @@ export async function POST(req: Request) {
 
         if (file.type === "application/pdf") {
             try {
-                // Named import from the modern pdf-parse package
-                // @ts-ignore
-                const { PDFParse } = await import("pdf-parse");
-
-                // Explicitly set the worker path using file:// protocol for ESM compatibility
-                const workerPath = path.resolve(process.cwd(), "node_modules/pdf-parse/dist/pdf-parse/esm/pdf.worker.mjs");
-                const workerUrl = pathToFileURL(workerPath).href;
-                PDFParse.setWorker(workerUrl);
-
-                // Initialize the parser with the PDF data
-                const parser = new PDFParse({ data: new Uint8Array(buffer) });
-                const data = await parser.getText();
+                // Standard import for pdf-parse
+                const pdf = (await import("pdf-parse/lib/pdf-parse.js")).default;
+                
+                // Directly parse the buffer
+                const data = await pdf(buffer);
                 resumeText = data.text;
             } catch (pdfError) {
                 console.error("PDF Parsing Error:", pdfError);
