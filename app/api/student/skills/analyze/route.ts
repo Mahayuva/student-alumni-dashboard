@@ -38,6 +38,7 @@ export async function POST(req: Request) {
         if (file.type === "application/pdf") {
             try {
                 // Named import from the modern pdf-parse package
+                // @ts-ignore
                 const { PDFParse } = await import("pdf-parse");
 
                 // Explicitly set the worker path using file:// protocol for ESM compatibility

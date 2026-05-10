@@ -125,7 +125,12 @@ export async function GET() {
                 headline: true,
                 skills: true,
                 batch: true,
-                department: true
+                department: true,
+                linkedin: true,
+                github: true,
+                twitter: true,
+                bio: true,
+                city: true
             }
         });
 

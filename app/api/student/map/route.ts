@@ -23,6 +23,7 @@ export async function GET() {
                 name: true,
                 image: true,
                 role: true,
+                email: true,
                 profile: {
                     select: {
                         currentRole: true,
@@ -30,7 +31,8 @@ export async function GET() {
                         headline: true,
                         city: true,
                         latitude: true,
-                        longitude: true
+                        longitude: true,
+                        linkedin: true
                     }
                 }
             }

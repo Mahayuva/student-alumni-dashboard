@@ -199,10 +199,10 @@ export default function SettingsPage() {
     ];
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 pb-12">
+        <div className="space-y-4 pb-12">
             <div>
                 <h1 className="text-3xl font-bold flex items-center gap-2 text-slate-900">
-                    <Settings className="w-8 h-8 text-blue-600" /> Settings
+                    <Settings className="w-8 h-8 text-slate-800" /> Settings
                 </h1>
                 <p className="text-slate-500 mt-1">Manage your account preferences</p>
             </div>
@@ -225,15 +225,14 @@ export default function SettingsPage() {
             </div>
 
             {/* Content Area */}
-            <div className="space-y-6">
-
+            <div className="space-y-4">
                 {/* PROFILE TAB */}
                 {activeTab === "profile" && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         {/* Profile Photo Card */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                             <h2 className="text-lg font-bold mb-1">Profile Photo</h2>
-                            <p className="text-sm text-slate-500 mb-6">Update your profile picture</p>
+                            <p className="text-sm text-slate-500 mb-4">Update your profile picture</p>
 
                             <div className="flex items-center gap-6">
                                 <div className="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold overflow-hidden">
@@ -253,8 +252,8 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Basic Info Card */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <h2 className="text-lg font-bold mb-6">Basic Information</h2>
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h2 className="text-lg font-bold mb-4">Basic Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Full Name</label>
@@ -304,8 +303,8 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Social Links Card */}
-                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                            <h2 className="text-lg font-bold mb-6">Social Links</h2>
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <h2 className="text-lg font-bold mb-4">Social Links</h2>
                             <div className="space-y-4">
                                 <div className="relative">
                                     <Linkedin className="absolute left-3 top-3 w-5 h-5 text-slate-400" />

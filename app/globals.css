@@ -3,9 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #2563eb;
-  --primary-light: rgba(37, 99, 235, 0.1);
-  --primary-shadow: rgba(37, 99, 235, 0.2);
+  --primary: #171717;
+  --primary-light: rgba(23, 23, 23, 0.05);
+  --primary-shadow: rgba(23, 23, 23, 0.15);
   --base-font-size: 16px;
 }
 

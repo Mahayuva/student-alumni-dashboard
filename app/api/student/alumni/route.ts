@@ -68,13 +68,13 @@ export async function GET(req: Request) {
                         website: true
                     }
                 },
-                mentorshipReceived: {
-                    where: {
-                        menteeId: session.user.id
-                    },
-                    select: {
-                        status: true
-                    }
+                connectionsReceived: {
+                    where: { senderId: session.user.id },
+                    select: { status: true }
+                },
+                connectionsSent: {
+                    where: { receiverId: session.user.id },
+                    select: { status: true }
                 }
             },
             orderBy: {

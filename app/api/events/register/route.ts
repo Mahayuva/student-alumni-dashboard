@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { eventId } = await req.json();
+        const { eventId, remarks, dietary } = await req.json();
 
         if (!eventId) {
             return new NextResponse("Event ID is required", { status: 400 });
@@ -33,7 +33,9 @@ export async function POST(req: Request) {
         const registration = await prisma.eventRegistration.create({
             data: {
                 userId: session.user.id,
-                eventId: eventId
+                eventId: eventId,
+                remarks: remarks,
+                dietary: dietary
             },
         });
 

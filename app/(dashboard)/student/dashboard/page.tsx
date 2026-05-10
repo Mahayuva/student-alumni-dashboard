@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Briefcase, Calendar, GraduationCap, MapPin, Search, Bell, MessageSquare, TrendingUp, User, Users } from "lucide-react";
+import { Briefcase, Calendar, GraduationCap, MapPin, Search, Bell, MessageSquare, TrendingUp, User, Users, Linkedin, Github, Twitter } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 
 export default function StudentDashboard() {
@@ -53,9 +53,9 @@ export default function StudentDashboard() {
     ];
 
     return (
-        <div className="space-y-12 max-w-[1600px] mx-auto pb-12">
+        <div className="space-y-6 pb-12">
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                         Welcome back, {session?.user?.name?.split(" ")[0] || "Student"}! 👋
@@ -101,22 +101,59 @@ export default function StudentDashboard() {
                         )}
                     </div>
                     <div className="flex-1 text-center md:text-left">
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
-                            <h2 className="text-2xl font-bold">{session?.user?.name}</h2>
-                            <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-medium backdrop-blur-sm border border-white/10">Student</span>
+                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-1">
+                            <h2 className="text-2xl font-black">{session?.user?.name}</h2>
+                            <span className="px-3 py-1 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-widest backdrop-blur-sm border border-white/10">{session?.user?.role || "Student"}</span>
                         </div>
-                        <p className="text-blue-100 text-sm mb-4">{profile?.headline || session?.user?.email}</p>
-                        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                        <p className="text-blue-100 text-sm font-bold mb-2">{profile?.headline || session?.user?.email}</p>
+                        
+                        {profile?.bio && (
+                            <p className="text-white/70 text-xs line-clamp-2 mb-4 max-w-2xl italic">"{profile.bio}"</p>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-4 items-center mb-4 text-xs font-bold text-white/80">
+                            {profile?.city && (
+                                <div className="flex items-center gap-1.5">
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    {profile.city}
+                                </div>
+                            )}
+                            {profile?.department && (
+                                <div className="flex items-center gap-1.5">
+                                    <GraduationCap className="w-3.5 h-3.5" />
+                                    {profile.department}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap gap-4 justify-center md:justify-start items-center">
                             {profile?.skills && profile.skills.length > 0 ? (
                                 profile.skills.map((skill: string, index: number) => (
-                                    <span key={index} className="text-xs bg-white/10 px-3 py-1 rounded-lg border border-white/10">{skill}</span>
+                                    <span key={index} className="text-[10px] uppercase font-black bg-white/10 px-3 py-1 rounded-lg border border-white/10">{skill}</span>
                                 ))
                             ) : (
                                 <>
-                                    <span className="text-xs bg-white/10 px-3 py-1 rounded-lg border border-white/10">{profile?.department || "Computer Science"}</span>
-                                    <span className="text-xs bg-white/10 px-3 py-1 rounded-lg border border-white/10">{profile?.batch ? `Batch ${profile.batch}` : "Batch 2025"}</span>
+                                    <span className="text-[10px] uppercase font-black bg-white/10 px-3 py-1 rounded-lg border border-white/10">{profile?.department || "Computer Science"}</span>
+                                    <span className="text-[10px] uppercase font-black bg-white/10 px-3 py-1 rounded-lg border border-white/10">{profile?.batch ? `Batch ${profile.batch}` : "Batch 2025"}</span>
                                 </>
                             )}
+                            
+                            <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/10">
+                                {profile?.linkedin && (
+                                    <a href={profile.linkedin} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
+                                        <Linkedin className="w-4 h-4" />
+                                    </a>
+                                )}
+                                {profile?.github && (
+                                    <a href={profile.github} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
+                                        <Github className="w-4 h-4" />
+                                    </a>
+                                )}
+                                {profile?.twitter && (
+                                    <a href={profile.twitter} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
+                                        <Twitter className="w-4 h-4" />
+                                    </a>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div>

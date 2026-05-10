@@ -7,6 +7,7 @@ import { z } from "zod";
 
 export async function GET(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
         const { searchParams } = new URL(req.url);
         const type = searchParams.get("type");
         const workMode = searchParams.get("workMode");
@@ -21,6 +22,11 @@ export async function GET(req: Request) {
                 postedBy: {
                     select: { name: true, image: true, email: true },
                 },
+                applications: session?.user?.id ? {
+                    where: {
+                        studentId: session.user.id
+                    }
+                } : false
             },
             orderBy: { createdAt: "desc" },
         });

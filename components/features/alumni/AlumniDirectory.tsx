@@ -56,14 +56,14 @@ export function AlumniDirectory() {
 
     const handleConnect = async (alumId: string) => {
         try {
-            const res = await fetch("/api/mentorship", {
+            const res = await fetch("/api/connections", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mentorId: alumId }),
+                body: JSON.stringify({ receiverId: alumId }),
             });
 
             if (res.ok) {
-                toast.success("Mentorship request sent!");
+                toast.success("Connection request sent!");
                 fetchAlumni(); 
             } else {
                 toast.error("Failed to send request.");
@@ -74,10 +74,10 @@ export function AlumniDirectory() {
     };
 
     const alumniWithStatus = filteredAlumni.map(alum => {
-        const request = alum.mentorshipReceived?.[0]; 
+        const connection = alum.connectionsReceived?.[0] || alum.connectionsSent?.[0]; 
         return {
             ...alum,
-            connectionStatus: request?.status || null,
+            connectionStatus: connection?.status || null,
         };
     });
 
@@ -158,9 +158,11 @@ export function AlumniDirectory() {
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-black text-xl text-slate-900 group-hover:text-primary transition-colors truncate">
-                                            {alum.name}
-                                        </h3>
+                                        <Link href={`/student/alumni/${alum.id}`}>
+                                            <h3 className="font-black text-xl text-slate-900 hover:text-primary transition-colors truncate cursor-pointer">
+                                                {alum.name}
+                                            </h3>
+                                        </Link>
                                         <p className="text-slate-500 text-sm font-bold tracking-tight">
                                             {alum.profile?.currentRole || (activeTab === "STUDENT" ? "Student" : "Alumni")}
                                         </p>

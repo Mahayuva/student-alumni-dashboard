@@ -168,6 +168,8 @@ model JobApplication {
   status    RequestStatus @default(PENDING)
   resumeUrl String?
   coverNote String?
+  degree    String?
+  skills    String?
   
   job       Job      @relation(fields: [jobId], references: [id])
   student   User     @relation(fields: [studentId], references: [id])
@@ -206,6 +208,8 @@ model EventRegistration {
   user      User     @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
+  remarks   String?
+  dietary   String?
 
   @@unique([eventId, userId])
 }

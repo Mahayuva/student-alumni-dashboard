@@ -133,7 +133,9 @@ export default function AlumniMap() {
                                         {user.profile?.city ? `${user.profile.city}` : "Location"}
                                     </p>
                                     <button
-                                        onClick={() => window.open(`mailto:${user.email}`)}
+                                        onClick={() => {
+                                            window.location.href = `/student/alumni/${user.id}`;
+                                        }}
                                         className="w-full bg-primary hover:bg-black text-white text-[10px] font-bold py-1.5 px-3 rounded-md transition-colors shadow-sm flex items-center justify-center gap-1"
                                     >
                                         Connect & View Profile

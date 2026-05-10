@@ -16,12 +16,19 @@ interface Event {
         name: string | null;
         image: string | null;
     };
+    registrations?: {
+        id: string;
+        createdAt: string | Date;
+    }[];
 }
 
 export function EventsList({ isAlumniView = false }: { isAlumniView?: boolean }) {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedType, setSelectedType] = useState("");
+    const [selectedFormat, setSelectedFormat] = useState("");
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -41,13 +48,18 @@ export function EventsList({ isAlumniView = false }: { isAlumniView?: boolean })
         fetchEvents();
     }, []);
 
-    const filteredEvents = events.filter(event =>
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredEvents = events.filter(event => {
+        const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                             event.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = selectedType ? event.type === selectedType : true;
+        const isOnline = event.location === null || event.location === "";
+        const matchesFormat = selectedFormat === "ONLINE" ? isOnline : selectedFormat === "OFFLINE" ? !isOnline : true;
+        
+        return matchesSearch && matchesType && matchesFormat;
+    });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Search and Filters */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
@@ -60,10 +72,52 @@ export function EventsList({ isAlumniView = false }: { isAlumniView?: boolean })
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium transition-colors ${showFilters ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                >
                     <Filter className="w-4 h-4" /> Filters
                 </button>
             </div>
+
+            {showFilters && (
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Event Type</label>
+                        <select 
+                            className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-primary outline-none"
+                            value={selectedType}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                        >
+                            <option value="">All Types</option>
+                            <option value="WEBINAR">Webinar</option>
+                            <option value="WORKSHOP">Workshop</option>
+                            <option value="SEMINAR">Seminar</option>
+                            <option value="MEETUP">Meetup</option>
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Format</label>
+                        <select 
+                            className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-primary outline-none"
+                            value={selectedFormat}
+                            onChange={(e) => setSelectedFormat(e.target.value)}
+                        >
+                            <option value="">All Formats</option>
+                            <option value="ONLINE">Online</option>
+                            <option value="OFFLINE">In-Person</option>
+                        </select>
+                    </div>
+                    <div className="flex items-end">
+                        <button 
+                            onClick={() => { setSelectedType(""); setSelectedFormat(""); }}
+                            className="px-4 py-2 text-sm text-slate-500 hover:text-slate-900 font-medium"
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Events Grid */}
             {loading ? (

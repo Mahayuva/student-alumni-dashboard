@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { jobId } = await req.json();
+        const { jobId, degree, skills, coverNote } = await req.json();
 
         if (!jobId) {
             return new NextResponse("Job ID is required", { status: 400 });
@@ -34,7 +34,10 @@ export async function POST(req: Request) {
             data: {
                 studentId: session.user.id,
                 jobId: jobId,
-                status: "PENDING"
+                status: "PENDING",
+                degree: degree,
+                skills: skills,
+                coverNote: coverNote
             },
         });
 

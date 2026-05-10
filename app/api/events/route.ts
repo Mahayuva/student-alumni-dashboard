@@ -7,6 +7,7 @@ import { z } from "zod";
 
 export async function GET(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
         const events = await prisma.event.findMany({
             where: {
                 isApproved: true,
@@ -15,6 +16,11 @@ export async function GET(req: Request) {
                 postedBy: {
                     select: { name: true, image: true, email: true },
                 },
+                registrations: session?.user?.id ? {
+                    where: {
+                        userId: session.user.id
+                    }
+                } : false
             },
             orderBy: { date: "asc" },
         });
