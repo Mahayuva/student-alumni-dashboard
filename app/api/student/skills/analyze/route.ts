@@ -38,6 +38,7 @@ export async function POST(req: Request) {
         if (file.type === "application/pdf") {
             try {
                 // Standard import for pdf-parse
+                // @ts-ignore
                 const pdf = (await import("pdf-parse/lib/pdf-parse.js")).default;
                 
                 // Directly parse the buffer
