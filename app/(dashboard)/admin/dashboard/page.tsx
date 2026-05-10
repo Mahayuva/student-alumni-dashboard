@@ -60,7 +60,7 @@ export default function AdminDashboard() {
     ];
 
     return (
-        <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 pb-12">
             {/* Header */}
             <div className="flex justify-between items-end">
                 <div>

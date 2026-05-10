@@ -158,7 +158,7 @@ export function AlumniDirectory() {
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <Link href={`/student/alumni/${alum.id}`}>
+                                        <Link href={`/${userRole?.toLowerCase()}/alumni/${alum.id}`}>
                                             <h3 className="font-black text-xl text-slate-900 hover:text-primary transition-colors truncate cursor-pointer">
                                                 {alum.name}
                                             </h3>

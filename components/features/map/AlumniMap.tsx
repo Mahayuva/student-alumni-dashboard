@@ -123,8 +123,14 @@ export default function AlumniMap() {
                                                 {user.name?.charAt(0)}
                                             </div>
                                         )}
-                                        <div>
-                                            <h3 className="font-bold text-sm text-slate-900 leading-tight">{user.name}</h3>
+                                        <div 
+                                            className="cursor-pointer group/name"
+                                            onClick={() => {
+                                                const basePath = window.location.pathname.startsWith('/admin') ? '/admin/alumni' : '/student/alumni';
+                                                window.location.href = `${basePath}/${user.id}`;
+                                            }}
+                                        >
+                                            <h3 className="font-bold text-sm text-slate-900 leading-tight group-hover/name:text-primary transition-colors">{user.name}</h3>
                                             <span className="text-[10px] uppercase font-bold text-primary">{user.role}</span>
                                         </div>
                                     </div>
@@ -134,11 +140,13 @@ export default function AlumniMap() {
                                     </p>
                                     <button
                                         onClick={() => {
-                                            window.location.href = `/student/alumni/${user.id}`;
+                                            // Redirect based on current role to ensure correct pathing
+                                            const basePath = window.location.pathname.startsWith('/admin') ? '/admin/alumni' : '/student/alumni';
+                                            window.location.href = `${basePath}/${user.id}`;
                                         }}
-                                        className="w-full bg-primary hover:bg-black text-white text-[10px] font-bold py-1.5 px-3 rounded-md transition-colors shadow-sm flex items-center justify-center gap-1"
+                                        className="w-full bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest py-2 px-3 rounded-xl transition-all shadow-lg shadow-black/10 flex items-center justify-center gap-1"
                                     >
-                                        Connect & View Profile
+                                        View Profile
                                     </button>
                                 </div>
                             </Popup>

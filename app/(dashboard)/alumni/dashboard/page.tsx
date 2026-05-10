@@ -76,9 +76,9 @@ export default function AlumniDashboard() {
     ];
 
     return (
-        <div className="space-y-12 max-w-[1600px] mx-auto pb-12">
+        <div className="space-y-6 pb-12">
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                         Welcome back, {session?.user?.name?.split(" ")[0] || "Alumni"}! 🎓

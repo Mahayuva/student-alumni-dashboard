@@ -9,7 +9,7 @@ export default function AlumniJobsPage() {
     const { data: session } = useSession();
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-slate-900">Manage Jobs</h1>
                 <Link href="/alumni/jobs/create">

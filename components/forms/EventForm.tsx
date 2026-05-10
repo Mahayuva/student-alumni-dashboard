@@ -60,7 +60,7 @@ export default function EventForm({ redirectPath }: EventFormProps) {
     };
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-4xl space-y-6">
             <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-2">

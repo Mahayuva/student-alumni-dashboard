@@ -83,7 +83,7 @@ export default function UserManagementPage() {
     );
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-10">
+        <div className="space-y-4 pb-10">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold">User Management</h1>
