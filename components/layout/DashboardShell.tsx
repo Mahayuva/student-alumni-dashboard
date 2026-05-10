@@ -31,7 +31,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Sidebar role={role} />
             <div className="flex-1 ml-[272px] flex flex-col relative overflow-hidden">
                 <Navbar />
-                <main className="flex-1 px-6 lg:px-8 pt-2 pb-8 overflow-y-auto custom-scrollbar relative z-10">
+                <main className="flex-1 px-6 lg:px-8 pt-1 pb-8 overflow-y-auto custom-scrollbar relative z-10">
                     <div className="max-w-[1400px] space-y-4">
                         {children}
                     </div>

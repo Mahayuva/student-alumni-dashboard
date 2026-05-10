@@ -62,12 +62,12 @@ export default function AdminDashboard() {
     return (
         <div className="space-y-6 pb-12">
             {/* Header */}
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                         Institution Dashboard 🏛️
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1">Manage your alumni network and monitor engagement</p>
+                    <p className="text-slate-500 font-medium mt-2">Manage your alumni network and monitor engagement</p>
                 </div>
                 <div className="flex gap-2">
                     <Link href="/admin/reports" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50 text-slate-700 shadow-sm flex items-center gap-2">

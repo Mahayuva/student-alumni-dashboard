@@ -132,7 +132,7 @@ export function Navbar() {
     };
 
     return (
-        <header className="h-16 bg-transparent sticky top-0 z-20 px-12 flex items-center justify-between">
+        <header className="h-14 bg-transparent sticky top-0 z-20 px-12 flex items-center justify-between">
             <div className="flex items-center gap-12 flex-1">
                 <div className="relative w-full max-w-sm ml-0 group hidden lg:block">
                     <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
